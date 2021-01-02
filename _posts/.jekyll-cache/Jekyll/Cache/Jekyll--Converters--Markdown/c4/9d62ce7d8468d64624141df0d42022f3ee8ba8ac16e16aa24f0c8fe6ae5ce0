@@ -1,0 +1,20 @@
+I"�<p>Hello world!</p>
+
+<p>In this post, we will take a look on how to start doing analysis of an .ipa(ios app store package) file and what pointers that you can use to start looking for vulnerability in the application.</p>
+
+<p>Just like an .apk(Android Package) file, .ipa is just a “zip” file that consist with components that bundle together with the application binary so it can be run in the IOS device.</p>
+
+<p>We can take a look on what’s inside the file by just using the “unzip” utility.</p>
+
+<h2> Setting Up The Environment </h2>
+
+<ul>
+  <li>
+    <p>Target: We will use Headbook-app.ipa file from <a href="https://ivrodriguez.com/mobile-ctf/">ipa-file</a></p>
+  </li>
+  <li>
+    <p>OS: I will use mac os</p>
+  </li>
+</ul>
+
+:ET

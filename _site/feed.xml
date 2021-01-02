@@ -1,0 +1,663 @@
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-01-02T19:20:27+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">ARMv64-Exploit Development [chapter 0x1] - Introduction</title><link href="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1.html" rel="alternate" type="text/html" title="ARMv64-Exploit Development [chapter 0x1] - Introduction" /><published>2021-01-02T10:44:25+07:00</published><updated>2021-01-02T10:44:25+07:00</updated><id>http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;In this post, we will cover some of key points and introduction for ARM 64 bit language that will act as a first step of your journey to become a savy ARM exploit developer. To make this area balance between programming and exploit, we will go fist talk about programming(Fundamental Concept) and the next post will be on how to spot a vulnerability in the program.&lt;/p&gt;
+
+&lt;h2&gt; Prerequisite &lt;/h2&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Programming language that we will used throughout the series is C and Assembly(for programming and fundamental concept), while python for exploitation. This means I expect that you at least have learn the baisc of programming language.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;All of the steps and execution done in the series are done inside kali-linux 64 bit ARM from Raspberry Foundation(Download from this &lt;a href=&quot;https://www.offensive-security.com/kali-linux-arm-images/&quot;&gt;link&lt;/a&gt;) that installed in Raspberry Pi 3B with 1GB RAM and 32 GB sd card memory. However, if the process is getting more intense, I will use Raspberry Pi 4.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_1.png&quot; alt=&quot;SETUP_PREVIEW&quot; height=&quot;300px&quot; width=&quot;300px&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_2.png&quot; alt=&quot;SETUP_PREVIEW&quot; height=&quot;300px&quot; width=&quot;500px&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Disclaimer &lt;/h2&gt;
+&lt;p&gt;I’m not an expert nor a tech savy, I’m just a simple guy who curious about everything. The real expert is the author who wrote this great books that I bought and reference it to write this series, please support them by buying the original copy of the book from official store:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Beginner Guide to Explotation on ARM volume I and II by Billy Ellis &lt;a href=&quot;https://zygosec.com/book.html&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Programming with 64-Bit ARM Assembly Language by Stephen Smith &lt;a href=&quot;https://www.amazon.co.uk/Programming-64-Bit-ARM-Assembly-Language/dp/1484258800/ref=sr_1_66?crid=1UTYFW76705AO&amp;amp;dchild=1&amp;amp;keywords=reverse+engineering&amp;amp;qid=1597079609&amp;amp;sprefix=reverse+engin%2Caps%2C148&amp;amp;sr=8-66#reader_1484258800&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Effective C: An Introduction to Professional C Programming by Robert C. Seacord &lt;a href=&quot;https://www.amazon.co.uk/gp/product/1718501048?ref=ppx_pt2_dt_b_prod_image&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Hacking: The Art of Exploitation, 2nd Edition &lt;a href=&quot;https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt; What is ARM and Why Should Care About IT? &lt;/h2&gt;
+
+&lt;p&gt;Basically, ARM is just another CPU architecture used by computer device like Intel and PowerPC. The difference between ARM with other architecture is that it is based on RISC or Reduce Instruction Set Computer instruction, this means that it consume less resource, less silicon, less cycle, less cost while offering pretty good performance. This is obviously become a selling point for ARM that makes Apple used it to design iPod in early day.&lt;/p&gt;
+
+&lt;p&gt;From portable music player, ARM can now find in any low power based device(IoT) including in iPhone and Android phones. Thus, we can expect that ARM is going to be the next hot thing in computer world, not to mention with the emergence of M1 chip from Apple, learning its security implementation will make it more crucial for future security researchers.&lt;/p&gt;
+
+&lt;p&gt;I hope this could motivate you guys, to pursue knowledge in this area.&lt;/p&gt;
+
+&lt;h2&gt; Why 64-bit? &lt;/h2&gt;
+
+&lt;p&gt;You probably wonder why am I starting with 64-bit rather than 32-bit? its because the architecture not many website cover this material, thus I like to be one of the first who introduce ARM-64 bit security. Eventhough you start learning from 32-bit all the knowledge it’s transferable to 64 bit since there are no major differences between these two.&lt;/p&gt;
+
+&lt;p&gt;That’s it for the pep talk, let’s go into real deal! we will start by covering:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;ARM CPU Registers&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Writing Hello World in ARM assembly&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Debugging Assembly&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Compiling and analysing C in ARM&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt; ARM CPU Registers &lt;/h2&gt;
+
+&lt;p&gt;Under the hood, the data in our computer is not parsed nor operated in memory instead it store in CPU register for operation.&lt;/p&gt;
+
+&lt;p&gt;Why not just do it directly to the memory? because there will be loss of time if we try to do it in memory, since memory itself is a separate component for the CPU to go there. Thus, you can think register as a component within CPU that offers “instant access” but limited.&lt;/p&gt;
+
+&lt;p&gt;ARM processor works with the concept of load-store architecture, where there will be three process that you have to go through, for example if you try to add two numbers together, you might do this:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Load the two numbers to their respective register somewhere in the memory.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Perform the operation and saved the result to a third register.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Store the result that we saved earlier in third register into the memory.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;When 64-bit program run in ARM Processor(User-Mode), it has the ability to used:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;31 general-purpose registers denote as X0-X30 to perform basically anything you want, whereas in 32-bit arm you only have access to 13 registers denote as R0-R12.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A Program Counter(PC) that hold the current address of instruction that being executed. In exploit development, this will be our main target to take control of the program. In 32-bit, PC register is equivalent to R15&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A Link Register(LR) which equivalent as X30 used to stored the return address when function is called. You should try to avoid using this register or your program will go “kaboom”. In 32-bit, LR is equivalent to R14&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;A Stack Pointer(SP) which point to the current top of the stack. In 32-bit, SP is equivalent to R13.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt; Writing Hello World in ARM-64 bit assembly &lt;/h2&gt;
+
+&lt;p&gt;Just like the tradition in any programming language, let’s try to create a assembly program that spit out “hello world”. Put this code in any text editor inside kali linux.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;.text&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;.global&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_start&lt;/span&gt;
+
+&lt;span class=&quot;nl&quot;&gt;_start:&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;ldr&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;helloworld&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;13&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;93&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+
+&lt;span class=&quot;nf&quot;&gt;.data&lt;/span&gt;
+&lt;span class=&quot;nl&quot;&gt;helloworld:&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;.ascii&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;hello&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;world&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;!\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;&lt;b&gt;Note: Please don’t try to just copy-paste the code, try to typing it one by one.&lt;/b&gt;&lt;/p&gt;
+
+&lt;p&gt;Save the code as “helloworld.s” (yes! the extension is .s) and let’s compile the program by using this command:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;~# as helloworld.s &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; helloworld.o
+~# ld helloworld.o &lt;span class=&quot;nt&quot;&gt;-o&lt;/span&gt; helloworld &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can just run the program by doing this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;~# ./helloworld
+hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_3.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Let’s try to understand the code one by one,&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;In assembly, the instruction goes with this format:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nl&quot;&gt;label:&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;opcode&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;operands&lt;/span&gt; &lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Where opcode is the command like “MOV” and “LDR”, whereas operands is the value or register that we used.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;At the top of the source command there is “.text”, this used to defining the section of “text” section that will hold our assembly source code.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;.text&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;.global&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_start&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;The program entry point is at “_start”, we need to define this as a global symbol by writting “.global _start” so that the linker has access to it.&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;.text&lt;/span&gt; 
+&lt;span class=&quot;nf&quot;&gt;.global&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;_start&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;
+
+&lt;span class=&quot;nl&quot;&gt;_start:&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;&amp;lt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;At the first section of the code we try to call write() function in linux that used to print a string, first we need to define the parameter that require for the function. According to linux man page, write require three parameters:&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;fd&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;buf&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;count&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;fd used for file description this tell the whether we want to read(0) or write(1) or error(2). To set the first parameter we assign the value #1 to the register X0 that act as the first parameter.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nl&quot;&gt;_start:&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;ldr&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;helloworld&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;13&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;*buf used to store the address of the content that we want to output, in this case “hello world!\n” which is reference as “=helloworld”, remember we want the address not the value, thus, we use instruction “ldr” to load the address of the string to register X1 that act as the second parameter.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nl&quot;&gt;_start:&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; 
+	&lt;span class=&quot;nf&quot;&gt;ldr&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;helloworld&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;13&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+
+&lt;span class=&quot;nf&quot;&gt;.data&lt;/span&gt;
+&lt;span class=&quot;nl&quot;&gt;helloworld:&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;.ascii&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;hello&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;world&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;!\&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;n&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;size_t count used to store the length of the string, in this case 13, we can assign this value to register X2 that act as the third register using “MOV” instruction.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nl&quot;&gt;_start:&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; 
+	&lt;span class=&quot;nf&quot;&gt;ldr&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;helloworld&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;13&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;finally, to called the system call of write function by specifying the function number in register X8, which in this case 64. After that we called software interrupt by using instruction “svc 0” so we can call the function without worrying about the location of the routine in the memory.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nl&quot;&gt;_start:&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt; 
+	&lt;span class=&quot;nf&quot;&gt;ldr&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;=&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;helloworld&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;13&lt;/span&gt; 
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;64&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The second section is used to called exit() function so the program can exit flawlessly.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;mov&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;X8&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;err&quot;&gt;#&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;93&lt;/span&gt;
+	&lt;span class=&quot;nf&quot;&gt;svc&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;0&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;h2&gt; Debugging Assembly &lt;/h2&gt;
+
+&lt;p&gt;lets take a look on what is the inside of the executable, I will used GEF(&lt;a href=&quot;https://github.com/hugsy/gef&quot;&gt;check&lt;/a&gt;) to do debugging on the ELF file. You can think GEF as GDB but in steroid.&lt;/p&gt;
+
+&lt;p&gt;Load the file by following this command:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_4.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Once inside the GEF console, you can dump the content of _start section by putting this command:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_5.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the result, it doesn’t have much of difference with the one that we have wrote earlier. The only difference is how the data string of “hello world!\n” is stored in the program, lets try to trace it. You can try to peek into the content of the address by putting this command:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_6.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Inside the address, there is another address that actually contain the string. This mechanism is similar to pointer.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_7.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Before we run the program inside GDB, we put a breakpoint at the first software interrupt:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_8.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;By putting the breakpoint on this instruction we were able to see how the program preparing itself to called the write() function:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_8_1.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;When you arrive at the breakpoint, GEF will automatically show the register information and as you can see this is just as we expected. In the assembly we set X0,X1,X2 as the 1st-3rd parameter of the write function respectively and X8 to store the linux function call.&lt;/p&gt;
+
+&lt;p&gt;If we move to the next instruction, the program spit out “hello world!”&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_9.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If you want to familiar yourself with the command in GDB, check page 25-37 in Hacking: The Art of Exploitation, 2nd Edition &lt;a href=&quot;https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441&quot;&gt;book&lt;/a&gt;&lt;/p&gt;
+
+&lt;h2&gt; Compiling and analysing C in ARM &lt;/h2&gt;
+
+&lt;p&gt;Okay! now that you have try to code the assembly, we will try to create and compile the same program but written in C and lets see what the differences, like this:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_10.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Compile the source code using GCC:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_11.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;lets loaded in the in GDB and run it:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_14.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As you can see its not much of a thing on the outside. Lets try to see the assembly code within the main function:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_15.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The assembly is different from the one we create earlier, printf() function require one parameter and to prepare it, the program first load the relative address 0x5555555000 using adrp instruction in register X0 and then X0 is add with immediate value #0x830 which will be result as the location of the string “hello world” =&amp;gt; 0x0000005555555830. To prove that lets create a breakpoint where we put it in bl / call function of printf().&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_16.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_17.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Remember X0 used as the first parameter and from the result it contain the location of the string that will passed to the printf() function.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_18.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_19.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now we want to see how bl instruction work but if you put “ni” to go to the next instruction it will skip the internal process of the bl instruction, thus, we will use “si” that will continue by getting inside the function call.&lt;/p&gt;
+
+&lt;p&gt;As mention before, bl usually used to call a function and to continue the execution of the program after function is called, it store the return address of the next instruction at register X30.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_20.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Continue the execution the GDB will show “hello world” string and exit the process.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_1/arm_ch1_21.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That’s all for today’s blog post, I hope this give you a right start to go down the road of arm64 exploit developer. I encourage you guys to try to create a simple program and debug it, so you have more general understanding on how to do reverse engineering.&lt;/p&gt;</content><author><name></name></author><category term="ARM_Exploit_Development_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">IOS Application Security [Chapter 0x2] - Reverse Engineering and Runtime Analysis</title><link href="http://localhost:4000/blog/ios_security_tutorial/2020/12/18/ios_application_security_chapter_0x2.html" rel="alternate" type="text/html" title="IOS Application Security [Chapter 0x2] - Reverse Engineering and Runtime Analysis" /><published>2020-12-18T13:39:25+07:00</published><updated>2020-12-18T13:39:25+07:00</updated><id>http://localhost:4000/blog/ios_security_tutorial/2020/12/18/ios_application_security_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/ios_security_tutorial/2020/12/18/ios_application_security_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;This is a continuation of previous chapter about IOS Application Security(&lt;a href=&quot;https://mobappsecurity.github.io/blog/ios_security_tutorial/2020/12/11/ios_application_security_chapter_0x1.html&quot;&gt;check&lt;/a&gt;). Last time, we managed to finish the first challenge from ivrodriquez IOS ctf, now we move to the second challenge which require deeper understanding of IOS binary that push us to do reverse engineering and runtime analysis.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_1.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As stated by the author itself, we can proceed to do the challenge by static analysis but running the application(dynamic analysis) will might help us gain better understanding on how to solve this app.&lt;/p&gt;
+
+&lt;p&gt;Thus, for the rest of the blog I will use Iphone 7 that have been jailbroken to do the dynamic analysis. Installing the application is pretty straightforward, all you need to do is to to attach the jailbroken Iphone to your macOS and open Xcode you can choose “window” &amp;gt; “Devices and Simulators” where it will pop out a list of attached/available devices that you can interact.&lt;/p&gt;
+
+&lt;p&gt;Finally, drag and drop the application to the “INSTALLED APPS” section. Walaa! the application icon will be showed in your Iphone. The name of the icon will be “Headbook”.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_2_1.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_2_2.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Open the application and you will be greet with login page, if you try to enter any random string to both of the form, you will be move to another viewcontroller which show a paragraph of “lorem ipsum”.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_2_3.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_2_4.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Okay, that’s it! don’t waste your time to search for a hidden UI in the application, it will not get you anywhere.&lt;/p&gt;
+
+&lt;h2&gt; Flag 1: Caesar Salad &lt;/h2&gt;
+
+&lt;p&gt;I don’t know if you notice it or not but the first flag is already discovered from the previous picture. Notice that the flag is highlighted by red color, but it’s encrypted with Caesar Cipher. Luckily, Caesar Cipher is easy to break you can try to all combination from 1-25 or go straight to ROT-13(&lt;a href=&quot;https://rot13.com/&quot;&gt;link&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_3.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_4.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Flag 2: RE is hard! &lt;/h2&gt;
+
+&lt;p&gt;The second flag, require us to reverse engineer the application. First things to do is to unzip the application and load the binary file to the hopper disassembler.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_5.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;switch to the label section in hopper disassembler, we can see there are couple of methods that we can analyse. Lets start with -[LoginViewController viewDidLoad] method, since this is the one who responsible to initialize the login page in the application.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_6.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If you look closely at the right side of the assembly instruction which hold details of the called object and parameters, we can see that this function start constructing our flag but only half of it(flag-F5717BB3-EFF4).&lt;/p&gt;
+
+&lt;p&gt;so where the rest of it?&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_7.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You can try to scroll down a little bit and if you try to read it, the function initialise a new object called LoginViewControllerHelper, by load(ldr) the parameter “new” as the argument of selector(R1) and location of LoginViewControllerHelper class as the argument of instance(R0), which used by objc_msgsend function. This is how objective C initialise an object under the hood.&lt;/p&gt;
+
+&lt;p&gt;This can be a new clue for us to get the remaining parts of the flag, we can try to search for methods that have connection with the class. Then you will three methods which is “one”, “two” and “three” each of this contain the remaining string that we need to get the flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_8.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_9.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_10.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;By appending it with the current result earlier, we got the second flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_11.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Flag 3: Internet! &lt;/h2&gt;
+
+&lt;p&gt;Lets go back to the label section that contain all of the methods within the apps, one of it(DownloadTask start) caught my attention.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_5.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;By going to these methods, we found out that the application use internet connection(NSURL) to contact a URL called ctf.ivrodriguez.com/analytics, by probing the destination url using curl, we got the third flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_12.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_13.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;“URLWithString” is the method to initialise destination URL for obj-c, while “downloadTaskWithURL” is the method used Creates a download task that retrieves the contents of the specified URL(&lt;a href=&quot;https://developer.apple.com/documentation/foundation/nsurlsession/1411608-downloadtaskwithurl&quot;&gt;ref&lt;/a&gt;) using the object NSURL that has been created earlier.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_14.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Flag 4: Introduce Cycript &lt;/h2&gt;
+
+&lt;p&gt;The last two flags can be retrieved by using tool called Cycript, to those of you who don’t know this tool, I will give a short intro about it but we will cover this in a lot more detail in the future post. In summary, cycript is a tool to basically explore and modify running application in iOS and Mac OS using javascript syntax(&lt;a href=&quot;http://www.cycript.org/&quot;&gt;more&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;To install cycript you can use cydia and search for “cycript”, like the below figure.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_15.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Once you install the tweak, go to the jailbreak using ssh for accessing the console and iproxy to forwarding the connection.&lt;/p&gt;
+
+&lt;p&gt;open a new tab to execute the following command:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_16.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;and open another tab to connect to the jailbroken iphone via ssh(password: alpine):&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_17.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Okay! before we move on, we need to know where is the location of the 4th flag. Unfortunately, the flag is encrypted and you can found it in this class method. Its looks like that the 4th flag is showed when the application has finished launching(&lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiapplicationdelegate/1622921-application&quot;&gt;more&lt;/a&gt;) through a NSLog class that will write console log in the system.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_18.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Luckily, the key to open the encryption is hardcoded in the Info.plist(bad practice of Applied Cryptography)&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_19.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;But how to decrypt the string? we still need to know what is the algorithm and the components need by it. IOS do encryption and decryption process using CCCycript class that requires.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-objc&quot; data-lang=&quot;objc&quot;&gt;&lt;span class=&quot;n&quot;&gt;CCCrypt&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;CCOperation&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;op&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CCAlgorithm&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;alg&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;CCOptions&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;options&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+         &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;key&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;keyLength&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;iv&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+         &lt;span class=&quot;k&quot;&gt;const&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dataIn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dataInLength&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;void&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dataOut&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+         &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dataOutAvailable&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;size_t&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;dataOutMoved&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You can found them in these two class method -[AppDelegate encryptText:] and -[AppDelegate decryptText:]. We will focus on the decryptText method, in the first few line of assembly code, we can see that the method called another method named “key”.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_20.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If we go to the “key” method, it retrieve the key by first using [NSBundle mainBundle] that will directly access the Info.plist file. As you know from the previous tutorial .plist file structure is like XML but the concept of operation is like dictionary which using key to get the content.&lt;/p&gt;
+
+&lt;p&gt;Thus, once the method get the .plist file it access the encryption key which using “enc_key” as the key name with objectForKey method and return the value at the end of the function to the caller.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_21.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Next, the key will be eventually passed as one of the parameter to passed to the CCCrypt method.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_22.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;There is a lot of things, that we need to gather to get the decrypted text, is there another way to get it without all of this hassle? Well thats why we have Cycript in the first place.&lt;/p&gt;
+
+&lt;p&gt;Cycript work by attaching to another program process, to do this you need to know the PID of the program by using the “ps” utility.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_23.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Once we got the PID, we can put into this command:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;~# cycript &lt;span class=&quot;nt&quot;&gt;-p&lt;/span&gt; 41973&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;This will spawn the cycript console, like this:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_24.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;So our focus now is to get the “AppDelegate” object, by using the method shown in figure above. By putting it in choose() function it will return array of its objects, in this case we have only one.&lt;/p&gt;
+
+&lt;p&gt;To make this easy, we can safe the object into a variable, like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;cy# app_obj &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; choose&lt;span class=&quot;o&quot;&gt;(&lt;/span&gt;AppDelegate&lt;span class=&quot;o&quot;&gt;)[&lt;/span&gt;0]&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Now, we can probe the variable to get more extensive information on the object this include the methods that we can access, by putting this command:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_25.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;as you can see in the instance methods section we have the desired method and we can called this function to get the decrypted text, like this:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_26.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;so what just happen? we actually tap into the application process and because we inside the process we were be able to alter and called the component inside it, thus we able to use this advantage to called the decryption method to get the flag text.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_30.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_31.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Flag 5: Easy Peasy Lemon Squeezy &lt;/h2&gt;
+
+&lt;p&gt;The last the flag is in the -[TextHandler mainFunc] but if you take a look of it, its kinda encode with weird alphabet but to get the flag, we don’t need to know how this function work in detail, we can use cycript again to get the object and call the method to give us the flag.&lt;/p&gt;
+
+&lt;p&gt;But if you try to get the object using choose() function like earlier, you will get an empty array this happen because the object itself is not called by any other method in the application, thus, we need to create this object first.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_27.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_28.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;after we have the object we can call the method to get the flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_29.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That’s all folks! I hope you enjoy this post and see you in the next one.&lt;/p&gt;</content><author><name></name></author><category term="IOS_Security_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">IOS Application Security [Chapter 0x1] - Introduction</title><link href="http://localhost:4000/blog/ios_security_tutorial/2020/12/11/ios_application_security_chapter_0x1.html" rel="alternate" type="text/html" title="IOS Application Security [Chapter 0x1] - Introduction" /><published>2020-12-11T12:34:25+07:00</published><updated>2020-12-11T12:34:25+07:00</updated><id>http://localhost:4000/blog/ios_security_tutorial/2020/12/11/ios_application_security_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/ios_security_tutorial/2020/12/11/ios_application_security_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;In this post, we will take a look on how to start doing analysis of an .ipa(ios app store package) file and several pointers that you can use to start looking for vulnerability in the application.&lt;/p&gt;
+
+&lt;p&gt;Just like an .apk(Android Package) file, .ipa is just a “zip” file that consist with components that bundle together with the application binary so it can be run in the IOS device.&lt;/p&gt;
+
+&lt;p&gt;We can take a look on what’s inside the file by just using the “unzip” utility.&lt;/p&gt;
+
+&lt;h2&gt; Setting Up The Environment &lt;/h2&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_1.png&quot; alt=&quot;CTF-PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Target: We will use Headbook-app.ipa file from &lt;a href=&quot;https://ivrodriguez.com/mobile-ctf/&quot;&gt;ipa-file&lt;/a&gt;.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;OS: I will use mac os but I believe all the tools and technique that I show in this blog can still be used in Linux environment.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Note: According to the author of the CTF, you don’t need to run this application. The point here is to get your feet wet a little bit.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt; Unzipping the IOS Application &lt;/h2&gt;
+
+&lt;p&gt;As I mentioned earlier, we can start our analysis by unzipping the .ipa file and look what components lie beneath it.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_2.png&quot; alt=&quot;UNZIP-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the image above, we can see the .ipa file is identifed as Zip archive data and once we unzip it we have a new folder called “Payload” which has another directory that contain all the component of ios application.&lt;/p&gt;
+
+&lt;p&gt;Lets try to analyse each of this file!&lt;/p&gt;
+
+&lt;h2&gt; What is Info.plist? &lt;/h2&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_3.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;First stop is the Info.plist, you can consider this file as the summary of what application can do in your devices this include also the minimum version of IOS version, the name of the app, permission, supported architecture and etc…&lt;/p&gt;
+
+&lt;p&gt;However if you try to dump the file using “cat”, you will get a lot of gibberish. This need to be converted into a readable XML text by using “plutil”.&lt;/p&gt;
+
+&lt;p&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_4.png&quot; alt=&quot;PLIST-FILE_1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You can get the first flag by going to the end of the content and also to verify the flag you can input it into &lt;a href=&quot;https://ctf.ivrodriguez.com/&quot;&gt;verify-link&lt;/a&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_5.png&quot; alt=&quot;PLIST-FILE_2&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_6.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Congrats! we got the first flag!&lt;/p&gt;
+
+&lt;p&gt;Try to take your time to make yourself comfortable with the .plist structure.&lt;/p&gt;
+
+&lt;p&gt;Note: for linux user you can convert .plist file by using plistutil&lt;/p&gt;
+
+&lt;p&gt;~#sudo apt-get install libplist-utils&lt;/p&gt;
+
+&lt;h2&gt; What is Assets.car? &lt;/h2&gt;
+
+&lt;p&gt;Analysing Assets.car is pretty confusing at start since there are not many information about it, however timac create a really well and thorough explanation about this type of file(check this &lt;a href=&quot;https://blog.timac.org/2018/1018-reverse-engineering-the-car-file-format/&quot;&gt;link&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;In summary, .car file let IOS application to manage assets such as images, textures, color and data by not simply copy it into app bundle but they are compiled into one .car. So don’t be surprise if you ever get stumble with one big .car file when analysing an ios application.&lt;/p&gt;
+
+&lt;p&gt;in order to analyse the .car file you can use this tools:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;assetutil to get the list of description about the content inside the .car&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_7.png&quot; alt=&quot;assetutil&quot; /&gt;&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;acextract to get a list nd extract files inside the .car file and save it into one folder, you can download the tools from &lt;a href=&quot;https://github.com/bartoszj/acextract/releases&quot;&gt;here&lt;/a&gt;&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_8.png&quot; alt=&quot;acextract&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_9.png&quot; alt=&quot;acextract2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the result above, we can see that inside the assets.car file there is one picture file called “flag@3x.png”, we can be sure that this is the file that we are looking for. Thus, I used acextract to get the picture and we got the second flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_10.png&quot; alt=&quot;flag&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_11.png&quot; alt=&quot;flag_2&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; What is .nib? &lt;/h2&gt;
+
+&lt;p&gt;In summary, .nib file is a file that allow developers to be able to manage GUI of the IOS application and wire them to functions and variable, to an IOS developer this is the “main.storyboard” file. More detail explanation of .nib file can be check on this &lt;a href=&quot;https://www.fireeye.com/blog/threat-research/2017/03/introduction_to_reve.html&quot;&gt;website&lt;/a&gt;.&lt;/p&gt;
+
+&lt;p&gt;To analyse the .nib file you can use python tool called [ibtool][nb]. By default .nib file is stored in directory “Base.lproj”, once you inside the directory there will be two storyboard, which is for main storyboard and launchscreen.&lt;/p&gt;
+
+&lt;p&gt;you can go to the main storyboard folder, you will find .nib that ready to be analysed.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_12_5.png&quot; alt=&quot;nib_list&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_12.png&quot; alt=&quot;nib&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;ibtool convert the .nib file into human readable format by grouping based on the type of UI object that they have.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_13.png&quot; alt=&quot;nib2&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You can scroll the result, little bit and you will get the third flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_14.png&quot; alt=&quot;nib3&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Analysing the IOS Binary File &lt;/h2&gt;
+
+&lt;p&gt;As you may notice the last file that we need to analyse is the binary of the application itself. IOS used Objective-c or Swift to build its application, unlike Android that easier to obtain the source code, you need to be able to read ARM assembly and know Obj-C or Swift object in order to understand the structure of the Application.&lt;/p&gt;
+
+&lt;p&gt;But of course you don’t need to be an expert of ARM, neither a savy swift developer. You just need to have several basic knowledge on both of this area. We will go down on this two material more in detail later in the next chaper( Don’t worry :) )&lt;/p&gt;
+
+&lt;p&gt;To reverse engineer the IOS binary you can use several tools such as radare2, ghidra, hopper or if you have extra money you can just go straight to ida-pro. But in this post we will go for hopper(free-version)&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_15.png&quot; alt=&quot;hopper_1&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;When loading the IOS binary to the hopper disassembler, it gives us two option of what type architecture that we want to choose for analysing the binary. For me, I will choose the ARM v7 32 bit since I’m more comfortable in this arch, feel free to use the 64 bit ARM version.&lt;/p&gt;
+
+&lt;p&gt;If you go the “labels” column, you will have the list of functions within the binary. You don’t need to check all of them one by one since most of them are by default generate by the system, you only need to focus on the labels that have “-[&lt;name&gt;]&quot; this format. This indicate that this is a method in objective-c.&lt;/name&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_16.png&quot; alt=&quot;hopper_2&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_17.png&quot; alt=&quot;hopper_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the images above, we have several methods, however functions name that starts with “LoginViewController” will not give us anything since it only contain jump instruction(br instruction).&lt;/p&gt;
+
+&lt;p&gt;We can move to the function name that starts with “AppDelegate”(&lt;a href=&quot;https://developer.apple.com/documentation/uikit/uiapplicationdelegate&quot;&gt;details&lt;/a&gt;) which is the root object of your app, try to go the -[AppDelegate applicationWillTerminate:] that tells the delegate when the app is about to terminate.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_18.png&quot; alt=&quot;hopper_4&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_19.png&quot; alt=&quot;hopper_5&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the above images we can observed that the function try to prepare several strings that contain the flag and append it into one string. We can assemble this strings to get the flag&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_20.png&quot; alt=&quot;hopper_6&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;We got the 4th flag!&lt;/p&gt;
+
+&lt;p&gt;But where is the fifth and the last flag?&lt;/p&gt;
+
+&lt;p&gt;Try to switch to the “strings” section in hopper and search for word “flag”&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_21.png&quot; alt=&quot;hopper_7&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;From the above image, we got two strings, we can try to cross reference these two strings to see where it uses in the application. Right-click the strings and choose “reference to…”&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_22.png&quot; alt=&quot;hopper_8&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The first cross referense take us to the different flag that we found earlier, this could be the one that we look for&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_23.png&quot; alt=&quot;hopper_9&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;While the second is leading us to the fourth flag, thus, let us focus on the first one.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_24.png&quot; alt=&quot;hopper_10&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;By doing cross referencing again in hopper, it take us to the struct of the obj-c method from LoginViewController. From the result, we can observed that each of the flag is saved and separated into different structs. We can try to assemble each of the string to get the flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_1/ios_ch1_25.png&quot; alt=&quot;hopper_11&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally, we got the last flag!&lt;/p&gt;
+
+&lt;p&gt;That’s all folks! I hope you enjoy this post and see you in the next one.&lt;/p&gt;</content><author><name></name></author><category term="IOS_Security_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Welcome to MobAppSec-Blog!</title><link href="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html" rel="alternate" type="text/html" title="Welcome to MobAppSec-Blog!" /><published>2020-12-03T14:44:25+07:00</published><updated>2020-12-03T14:44:25+07:00</updated><id>http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world</id><content type="html" xml:base="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html">&lt;p&gt;Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly function as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;Android and IOS Application Security&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;–(Reverse Engineering, Secure Coding and Exploitation)&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Rooting &amp;amp; Jailbreaking&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;–(Research, experience and Learning curve of mine studying about this material)&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Android &amp;amp; IOS Tweaking&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;–(Xposed, Magisk, THEOS and tweaking)&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;ARM Exploit Development&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;–(IOT security, IOT programming with C, ARM assembly(arm64 and arm7) and IOT Exploit)&lt;/p&gt;
+&lt;ul&gt;
+  &lt;li&gt;Android Malware Analysis&lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;–(Counter-Exploit and Reverse Engineering)&lt;/p&gt;
+
+&lt;p&gt;Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/&quot;&gt;old blog&lt;/a&gt;) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog?&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;Because I want to have a fresh start&lt;/li&gt;
+  &lt;li&gt;I think blogger have kinda pale design so its kinda not suit for my taste&lt;/li&gt;
+  &lt;li&gt;I want to challenge myself by using a new framework to create a blog&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;That’s all I think it’s enough for introduction and I hope you enjoy this blog, cheers!&lt;/p&gt;</content><author><name></name></author><category term="food_for_thought" /><summary type="html">Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly function as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:</summary></entry></feed>
