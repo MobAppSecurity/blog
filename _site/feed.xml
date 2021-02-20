@@ -1,4 +1,158 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-01-02T19:20:27+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">ARMv64-Exploit Development [chapter 0x1] - Introduction</title><link href="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1.html" rel="alternate" type="text/html" title="ARMv64-Exploit Development [chapter 0x1] - Introduction" /><published>2021-01-02T10:44:25+07:00</published><updated>2021-01-02T10:44:25+07:00</updated><id>http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-02-20T21:08:59+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">ARMv64-Exploit Development [chapter 0x2] - Exploit EIP</title><link href="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/18/arm64_exploit_development_chapter_0x2.html" rel="alternate" type="text/html" title="ARMv64-Exploit Development [chapter 0x2] - Exploit EIP" /><published>2021-02-18T10:44:25+07:00</published><updated>2021-02-18T10:44:25+07:00</updated><id>http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/18/arm64_exploit_development_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/18/arm64_exploit_development_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;This is going to be the part two of ARM exploit development series, last time we are talking about some fundamentals behind ARM architecture, how to debug it and also create a very simple ARM64 hello world program from assembly.&lt;/p&gt;
+
+&lt;p&gt;In this post, we are going to cover buffer overflow in ARM64 binary and the sample vulnerable code that we are going to use is from &lt;a href=&quot;https://exploit.education/phoenix&quot;&gt;phoenix&lt;/a&gt; Exploit Education(this post will cover stack 0 and stack 1).&lt;/p&gt;
+
+&lt;h2&gt; Disclaimer &lt;/h2&gt;
+&lt;p&gt;I’m not an expert nor a tech savy, I’m just a simple guy who curious about everything. The real expert is the author who wrote this great books that I bought and reference it to write this series, please support them by buying the original copy of the book from official store:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Beginner Guide to Explotation on ARM volume I and II by Billy Ellis &lt;a href=&quot;https://zygosec.com/book.html&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Programming with 64-Bit ARM Assembly Language by Stephen Smith &lt;a href=&quot;https://www.amazon.co.uk/Programming-64-Bit-ARM-Assembly-Language/dp/1484258800/ref=sr_1_66?crid=1UTYFW76705AO&amp;amp;dchild=1&amp;amp;keywords=reverse+engineering&amp;amp;qid=1597079609&amp;amp;sprefix=reverse+engin%2Caps%2C148&amp;amp;sr=8-66#reader_1484258800&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Effective C: An Introduction to Professional C Programming by Robert C. Seacord &lt;a href=&quot;https://www.amazon.co.uk/gp/product/1718501048?ref=ppx_pt2_dt_b_prod_image&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Hacking: The Art of Exploitation, 2nd Edition &lt;a href=&quot;https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441&quot;&gt;buy-book&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;h2&gt; Stack 0: Lets make the world most vulnerable code! &lt;/h2&gt;
+
+&lt;p&gt;I use the code from stack 0 and make some adjustment based on my taste like this:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As you can see from the code above first few lines are used to create a struct which is “sequentially allocated memory object” - Robert C. Seacord, inside the struct we have two variables one is used to stored our input(char buffer) with 64 bytes of memory and the other one used to stored an integer that will be later assign 0x41(“A” in hex)&lt;/p&gt;
+
+&lt;p&gt;Afte the initialization of struct variable we continue our program by prompting user to insert a data into the program and finally it checks whether the variable changeme within the struct is changed or not.&lt;/p&gt;
+
+&lt;p&gt;you must be wondering, is it possible to change a hardcoded variable in a program.&lt;/p&gt;
+
+&lt;p&gt;well yes! and thats going to be our goal in this level&lt;/p&gt;
+
+&lt;p&gt;after writing the code, its time to compile the code into a binary. We are going to use GCC compiler with some extra parameters on it.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm2.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Just like the command above, we added three extra parameters:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;-fno-stack-protector to disable stack canary&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;-z execstack to make the stack executable&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;-no-pie disable code randomization&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;these three features is basically whats so called defense mechanism to prevent exploit in C code base, but since we want to create the world most vulnerable code, we just going to disable three of them.&lt;/p&gt;
+
+&lt;p&gt;For starters, lets try to input a really long strings into the program and see what happen.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm4.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;hhmmm wait! did we just change the “changeme” variable? from the result, it confirms that our input actually causing the program to change the content of the variable.&lt;/p&gt;
+
+&lt;p&gt;WHY?!&lt;/p&gt;
+
+&lt;p&gt;take a look at the second picture when we try to compile the program source code, the compiler stated that the “gets” function is dangerous and should not be used.&lt;/p&gt;
+
+&lt;p&gt;this is due to the fact that the function do not safely passed the input to the memory and “safe” in this term means it does not limiting the size of the input, thus, creating a phenomena called “buffer overflow” by putting a large value to the program it cause the program to overwrite other part of its memory causing it to behave unexpectely(in this case, it actually overwrite the “changeme” variable)&lt;/p&gt;
+
+&lt;p&gt;lets try to dissect the program in order to have a proper understanding of how buffer overflow occur&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm5.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;load the program to GDB that have &lt;a href=&quot;https://github.com/hugsy/gef&quot;&gt;GEF&lt;/a&gt; in it and input “checksec” inside the shell to check whether we have successfully turn off the defense mechanism in the binary. If the result is like the picture above that means, we did it.&lt;/p&gt;
+
+&lt;p&gt;Try to disassemble the function main by putting the following command line.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm6.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now try to pay attention on instructions that have been cover with red box. The first redbox cover on how the program assign and saved the locals.changeme struct variable in stack:&lt;/p&gt;
+
+&lt;p&gt;mov w0, 0x41 =&amp;gt; the program stored value “A” in register w0(this means the register only use 32 bit memory for efficiency)&lt;/p&gt;
+
+&lt;p&gt;str w0, [sp, #88] =&amp;gt; register w0 that has “A” store its content to the stack pointer that’s located at(sp+88) so it can be referenced later.&lt;/p&gt;
+
+&lt;p&gt;add x0, sp,#0x18 =&amp;gt; assign register X0 with the address of sp+0x18, this is used to prepare X0 to be used as the first parameter for gets() function for storing our value.&lt;/p&gt;
+
+&lt;p&gt;In conclusion our input is stored at sp+0x18 whereas the locals.changeme variable is stored at sp+#88. Move to the next box that contain instruction of checking whether the value is changed in locals.changeme variable.&lt;/p&gt;
+
+&lt;p&gt;But before the locals.changeme variable is compared, the program load the value that we stored earlier in sp+0x18 which is “A” to the register w0 again.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm7.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;lets put a breakpoint at gets function call so we know where is the exact location of our input and locals.changeme variable. &lt;b&gt;Run the program by entering “r” to the GEF console.&lt;/b&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm8.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Upon entering the breakpoint, GEF will show you the address where our input will be stored in stack(0x7ffffff3a8)&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm9.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm10.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;lets try to move to the next instruction by input command “ni” into the GEF shell and after that you will be expected to input something in this case I will put “BBBB” so it easier to identify it in memory. Next, the GEF will show you the state of the register after inputing the value to the program and as you can see our value is stored excatly where we expect.&lt;/p&gt;
+
+&lt;p&gt;Now that we know the location of our input we can now try to guessing where is locals.changeme variable in stack, since struct is adjacent that means the location of it will not go away that far.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm11.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;by putting the above command we actually dumping the next 20 bytes from the address of our input value and at the last row notice that there is value of 0x41 in 0x7ffffff3e8, this is where locals.changeme value is stored. Thus we can do a simple arithmetic calculation on how many string that is required to overflow and changed the variable.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm12.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The above command will do simple substraction between two address and the result is in decimal. it shows that We need 64 character to overflow the variable, try re-running the program and if you try to look at the stack again after inputting the program with the corresponding value, it overwrite the value within the variable.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm13.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Stack 1: Little Endian! &lt;/h2&gt;
+
+&lt;p&gt;Now lets move to the next level, basically the concept of the program is still the same and only have a minor change in the source code.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm14.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;This time the locals.changeme variable is assign with value 0 and to get the input from user the program used sys.argv function and to save the value it uses strcpy(). Using this function will ultimately lead to buffer overflow, because it doesn’t have a proper input limitation that make user can enter any data.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm15.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;I compiled the program with the same parameters as the previous one. Lets take a loot at the main function and put a breakpoint when strcpy() function is called.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm16.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm17.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Run the program by entering “r AAAAAAAAAAAAAAAAAAAA” the second column is consider input by the program since it gets value from sys.argv[1] function.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm19.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm18.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Notice that in strcpy() function it requires two parameters that will act as source and destination thus the program prepare these two registers r0(1st parameter as destination) and r1(2nd parameter as source/input).&lt;/p&gt;
+
+&lt;p&gt;From the result we know that our input is stored at 0x7ffffff388, from this information we can tru to guess where is locals.changeme stored in the stack.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm20.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm21.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The concept is still the same with the previous challenge, we just need to substract these two address together which stores our input and locals.changeme value respectively. Now, all we need to do now is to figured out how to overwrite the locals.changeme with 0x496c5962, we can do that with the following command.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/arm64_exploit_dev_2/arm22.png&quot; alt=&quot;SETUP_PREVIEW&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Using python we can generate 64 characters automatically and append the value 0x496c5962 but when we append it into our python script we need reverse it since arm64 is using little endian, although the fact it can use this two format(bi-endian) but most ARM CPU architecture used little endian format and dont forget to put “`” before and after the command so it will interpret as python script before passed to the program argument.&lt;/p&gt;
+
+&lt;p&gt;That’s all folks I hope you enjoy this post, see you in the next post.&lt;/p&gt;</content><author><name></name></author><category term="ARM_Exploit_Development_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">ARMv64-Exploit Development [chapter 0x1] - Introduction</title><link href="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1.html" rel="alternate" type="text/html" title="ARMv64-Exploit Development [chapter 0x1] - Introduction" /><published>2021-01-02T10:44:25+07:00</published><updated>2021-01-02T10:44:25+07:00</updated><id>http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/01/02/arm64_exploit_development_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
 
 &lt;p&gt;In this post, we will cover some of key points and introduction for ARM 64 bit language that will act as a first step of your journey to become a savy ARM exploit developer. To make this area balance between programming and exploit, we will go fist talk about programming(Fundamental Concept) and the next post will be on how to spot a vulnerability in the program.&lt;/p&gt;
 
@@ -339,7 +493,7 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;You can try to scroll down a little bit and if you try to read it, the function initialise a new object called LoginViewControllerHelper, by load(ldr) the parameter “new” as the argument of selector(R1) and location of LoginViewControllerHelper class as the argument of instance(R0), which used by objc_msgsend function. This is how objective C initialise an object under the hood.&lt;/p&gt;
 
-&lt;p&gt;This can be a new clue for us to get the remaining parts of the flag, we can try to search for methods that have connection with the class. Then you will three methods which is “one”, “two” and “three” each of this contain the remaining string that we need to get the flag.&lt;/p&gt;
+&lt;p&gt;This can be a new clue for us to get the remaining parts of the flag, we can try to search for methods that have connection with the class. In the end, you will find three methods which is “one”, “two” and “three” each of this contain the remaining string that we need to get the flag.&lt;/p&gt;
 
 &lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_8.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
 
@@ -440,17 +594,17 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;as you can see in the instance methods section we have the desired method and we can called this function to get the decrypted text, like this:&lt;/p&gt;
 
-&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_26.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
-
-&lt;p&gt;so what just happen? we actually tap into the application process and because we inside the process we were be able to alter and called the component inside it, thus we able to use this advantage to called the decryption method to get the flag text.&lt;/p&gt;
-
 &lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_30.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;so what just happen? we actually tap into the application process and because we inside the process we were be able to alter and called the component inside it, thus we able to use this advantage to called the decryption method to get the flag text without worrying the details of the working scheme(Thats the beauty of cycript).&lt;/p&gt;
 
 &lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_31.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
 
 &lt;h2&gt; Flag 5: Easy Peasy Lemon Squeezy &lt;/h2&gt;
 
 &lt;p&gt;The last the flag is in the -[TextHandler mainFunc] but if you take a look of it, its kinda encode with weird alphabet but to get the flag, we don’t need to know how this function work in detail, we can use cycript again to get the object and call the method to give us the flag.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/ios_application_security_2/ios_ch2_26.png&quot; alt=&quot;PLIST-FILE&quot; /&gt;&lt;/p&gt;
 
 &lt;p&gt;But if you try to get the object using choose() function like earlier, you will get an empty array this happen because the object itself is not called by any other method in the application, thus, we need to create this object first.&lt;/p&gt;
 
@@ -624,33 +778,41 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;Finally, we got the last flag!&lt;/p&gt;
 
-&lt;p&gt;That’s all folks! I hope you enjoy this post and see you in the next one.&lt;/p&gt;</content><author><name></name></author><category term="IOS_Security_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Welcome to MobAppSec-Blog!</title><link href="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html" rel="alternate" type="text/html" title="Welcome to MobAppSec-Blog!" /><published>2020-12-03T14:44:25+07:00</published><updated>2020-12-03T14:44:25+07:00</updated><id>http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world</id><content type="html" xml:base="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html">&lt;p&gt;Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly function as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:&lt;/p&gt;
+&lt;p&gt;That’s all folks! I hope you enjoy this post and see you in the next one.&lt;/p&gt;</content><author><name></name></author><category term="IOS_Security_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Welcome to MobAppSec-Blog!</title><link href="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html" rel="alternate" type="text/html" title="Welcome to MobAppSec-Blog!" /><published>2020-12-03T14:44:25+07:00</published><updated>2020-12-03T14:44:25+07:00</updated><id>http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world</id><content type="html" xml:base="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html">&lt;p&gt;Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:&lt;/p&gt;
 
 &lt;ul&gt;
-  &lt;li&gt;Android and IOS Application Security&lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Android and IOS Application Security (Reverse Engineering, Secure Coding and Exploitation)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;ARM Exploit Development (IOS Jailbreaking)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Android Malware Analysis (Counter-Exploit and Reverse Engineering)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Windows Exploit Development (Preparation for OSED)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Little bit of API Security (This will be helpful for mobile pentesting in real life)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Reverse Engineering and Pwn CTF (I like to stay sharp)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Target:&lt;/p&gt;
+  &lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;–(Reverse Engineering, Secure Coding and Exploitation)&lt;/p&gt;
+&lt;p&gt;pwnable.kr&lt;/p&gt;
+
+&lt;p&gt;pwnable.tw&lt;/p&gt;
+
+&lt;p&gt;io.netgarage.org&lt;/p&gt;
+
 &lt;ul&gt;
-  &lt;li&gt;Rooting &amp;amp; Jailbreaking&lt;/li&gt;
+  &lt;li&gt;Applied Cryptography (Matasano)&lt;/li&gt;
 &lt;/ul&gt;
-
-&lt;p&gt;–(Research, experience and Learning curve of mine studying about this material)&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Android &amp;amp; IOS Tweaking&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;–(Xposed, Magisk, THEOS and tweaking)&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;ARM Exploit Development&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;–(IOT security, IOT programming with C, ARM assembly(arm64 and arm7) and IOT Exploit)&lt;/p&gt;
-&lt;ul&gt;
-  &lt;li&gt;Android Malware Analysis&lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;–(Counter-Exploit and Reverse Engineering)&lt;/p&gt;
 
 &lt;p&gt;Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/&quot;&gt;old blog&lt;/a&gt;) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog?&lt;/p&gt;
 
@@ -660,4 +822,4 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
   &lt;li&gt;I want to challenge myself by using a new framework to create a blog&lt;/li&gt;
 &lt;/ol&gt;
 
-&lt;p&gt;That’s all I think it’s enough for introduction and I hope you enjoy this blog, cheers!&lt;/p&gt;</content><author><name></name></author><category term="food_for_thought" /><summary type="html">Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly function as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:</summary></entry></feed>
+&lt;p&gt;That’s all I think it’s enough for introduction and I hope you enjoy this blog, cheers!&lt;/p&gt;</content><author><name></name></author><category term="food_for_thought" /><summary type="html">Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:</summary></entry></feed>

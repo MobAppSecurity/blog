@@ -1,0 +1,105 @@
+I"<p>Hello world!</p>
+
+<p>This is going to be the part two of ARM exploit development series, last time we are talking about some fundamentals behind ARM architecture, how to debug it and also create a very simple ARM64 hello world program from assembly.</p>
+
+<p>In this post, we are going to cover buffer overflow in ARM64 binary and the sample vulnerable code that we are going to use is from <a href="https://exploit.education/phoenix">phoenix</a> Exploit Education(this post will cover stack 0 and stack 1).</p>
+
+<h2> Disclaimer </h2>
+<p>I’m not an expert nor a tech savy, I’m just a simple guy who curious about everything. The real expert is the author who wrote this great books that I bought and reference it to write this series, please support them by buying the original copy of the book from official store:</p>
+
+<ul>
+  <li>
+    <p>Beginner Guide to Explotation on ARM volume I and II by Billy Ellis <a href="https://zygosec.com/book.html">buy-book</a></p>
+  </li>
+  <li>
+    <p>Programming with 64-Bit ARM Assembly Language by Stephen Smith <a href="https://www.amazon.co.uk/Programming-64-Bit-ARM-Assembly-Language/dp/1484258800/ref=sr_1_66?crid=1UTYFW76705AO&amp;dchild=1&amp;keywords=reverse+engineering&amp;qid=1597079609&amp;sprefix=reverse+engin%2Caps%2C148&amp;sr=8-66#reader_1484258800">buy-book</a></p>
+  </li>
+  <li>
+    <p>Effective C: An Introduction to Professional C Programming by Robert C. Seacord <a href="https://www.amazon.co.uk/gp/product/1718501048?ref=ppx_pt2_dt_b_prod_image">buy-book</a></p>
+  </li>
+  <li>
+    <p>Hacking: The Art of Exploitation, 2nd Edition <a href="https://www.amazon.com/Hacking-Art-Exploitation-Jon-Erickson/dp/1593271441">buy-book</a></p>
+  </li>
+</ul>
+
+<h2> Stack 0: Lets make the world most vulnerable code! </h2>
+
+<p>I use the code from stack 0 and make some adjustment based on my taste like this:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm.png" alt="SETUP_PREVIEW" /></p>
+
+<p>As you can see from the code above first few lines are used to create a struct which is “sequentially allocated memory object” - Robert C. Seacord, inside the struct we have two variables one is used to stored our input(char buffer) with 64 bytes of memory and the other one used to stored an integer that will be later assign 0x41(“A” in hex)</p>
+
+<p>Afte the initialization of struct variable we continue our program by prompting user to insert a data into the program and finally it checks whether the variable changeme within the struct is changed or not.</p>
+
+<p>you must be wondering, is it possible to change a hardcoded variable in a program.</p>
+
+<p>well yes! and thats going to be our goal in this level</p>
+
+<p>after writing the code, its time to compile the code into a binary. We are going to use GCC compiler with some extra parameters on it.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm2.png" alt="SETUP_PREVIEW" /></p>
+
+<p>Just like the command above, we added three extra parameters:</p>
+
+<ul>
+  <li>
+    <p>-fno-stack-protector to disable stack canary</p>
+  </li>
+  <li>
+    <p>-z execstack to make the stack executable</p>
+  </li>
+  <li>
+    <p>-no-pie disable code randomization</p>
+  </li>
+</ul>
+
+<p>these three features is basically whats so called defense mechanism to prevent exploit in C code base, but since we want to create the world most vulnerable code, we just going to disable three of them.</p>
+
+<p>For starters, lets try to input a really long strings into the program and see what happen.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm4.png" alt="SETUP_PREVIEW" /></p>
+
+<p>hhmmm wait! did we just change the “changeme” variable? from the result, it confirms that our input actually causing the program to change the content of the variable.</p>
+
+<p>WHY?!</p>
+
+<p>take a look at the second picture when we try to compile the program source code, the compiler stated that the “gets” function is dangerous and should not be used.</p>
+
+<p>this is due to the fact that the function do not safely passed the input to the memory and “safe” in this term means it does not limiting the size of the input, thus, creating a phenomena called “buffer overflow” by putting a large value to the program it cause the program to overwrite other part of its memory causing it to behave unexpectely(in this case, it actually overwrite the “changeme” variable)</p>
+
+<p>lets try to dissect the program in order to have a proper understanding of how buffer overflow occur</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm5.png" alt="SETUP_PREVIEW" /></p>
+
+<p>load the program to GDB that have <a href="https://github.com/hugsy/gef">GEF</a> in it and input “checksec” inside the shell to check whether we have successfully turn off the defense mechanism in the binary. If the result is like the picture above that means, we did it.</p>
+
+<p>Try to disassemble the function main by putting the following command line.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm6.png" alt="SETUP_PREVIEW" /></p>
+
+<p>Now try to pay attention on instructions that have been cover with red box. The first redbox cover on how the program assign and saved the locals.changeme struct variable in stack:</p>
+
+<p>mov w0, 0x41 =&gt; the program stored value “A” in register w0(this means the register only use 32 bit memory for efficiency)</p>
+
+<p>str w0, [sp, #88] =&gt; register w0 that has “A” store its content to the stack pointer that’s located at(sp+88) so it can be referenced later.</p>
+
+<p>add x0, sp,#0x18 =&gt; assign register X0 with the address of sp+0x18, this is used to prepare X0 to be used as the first parameter for gets() function for storing our value.</p>
+
+<p>In conclusion our input is stored at sp+0x18 whereas the locals.changeme variable is stored at sp+#88. Move to the next box that contain instruction of checking whether the value is changed in locals.changeme variable.</p>
+
+<p>But before the locals.changeme variable is compared, the program load the value that we stored earlier in sp+0x18 which is “A” to the register w0 again.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm7.png" alt="SETUP_PREVIEW" /></p>
+
+<p>lets put a breakpoint at gets function call so we know where is the exact location of our input and locals.changeme variable.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm8.png" alt="SETUP_PREVIEW" /></p>
+
+<p>Upon entering the breakpoint, GEF will show you the address where our input will be stored in stack(0x7ffffff3a8)</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/arm64_exploit_dev_2/arm9.png" alt="SETUP_PREVIEW" /></p>
+
+<p>lets try to move to the next instruction by input command “ni” into the GEF shell and after that you will be expected to input something in this case I will put “BBBB” so it easier to identify it in memory.</p>
+
+:ET

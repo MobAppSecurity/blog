@@ -1,0 +1,47 @@
+I"+<p>Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:</p>
+
+<ul>
+  <li>
+    <p>Android and IOS Application Security (Reverse Engineering, Secure Coding and Exploitation)</p>
+  </li>
+  <li>
+    <p>ARM Exploit Development (IOS Jailbreaking)</p>
+  </li>
+  <li>
+    <p>Android Malware Analysis (Counter-Exploit and Reverse Engineering)</p>
+  </li>
+  <li>
+    <p>Windows Exploit Development (Preparation for OSED)</p>
+  </li>
+  <li>
+    <p>Little bit of API Security (This will be helpful for mobile pentesting in real life)</p>
+  </li>
+  <li>
+    <p>Reverse Engineering and Pwn CTF (I like to stay sharp)</p>
+  </li>
+  <li>
+    <p>Target:</p>
+  </li>
+</ul>
+
+<p>pwnable.kr</p>
+
+<p>pwnable.tw</p>
+
+<p>io.netgarage.org</p>
+
+<ul>
+  <li>Applied Cryptography</li>
+</ul>
+
+<p>Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger(<a href="https://court-of-testing-analysing.blogspot.com/">old blog</a>) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog?</p>
+
+<ol>
+  <li>Because I want to have a fresh start</li>
+  <li>I think blogger have kinda pale design so its kinda not suit for my taste</li>
+  <li>I want to challenge myself by using a new framework to create a blog</li>
+</ol>
+
+<p>That’s all I think it’s enough for introduction and I hope you enjoy this blog, cheers!</p>
+
+:ET
