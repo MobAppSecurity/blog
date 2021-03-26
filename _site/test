@@ -1,0 +1,9 @@
+[Unit]
+Description=uWSGI instance to serve ctfd
+After=network.target
+
+[Service]
+User=williams
+Group=www-data
+WorkingDirectory=/home/williams/CTFd
+ExecStart=/usr/local/bin/uwsgi --ini /home/williams/CTFd/ctfd.ini

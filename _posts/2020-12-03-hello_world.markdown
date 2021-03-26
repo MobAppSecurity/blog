@@ -13,32 +13,6 @@ Hello world! For my first post, I think it's a good idea to introduce this blog 
 - ARM Exploit Development (IOS Jailbreaking)
 
 
-- Android Malware Analysis (Counter-Exploit and Reverse Engineering)
-
-
-- Windows Exploit Development (Preparation for OSED)
-
-
-- Little bit of API Security (This will be helpful for mobile pentesting in real life)
-
-
-- Reverse Engineering and Pwn CTF (I like to stay sharp)
-
-
-- Target:
-
-
-pwnable.kr
-
-
-pwnable.tw
-
-
-io.netgarage.org
-
-
-- Applied Cryptography (Matasano)
-
 Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger([old blog][old-blogs]) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog? 
 
 

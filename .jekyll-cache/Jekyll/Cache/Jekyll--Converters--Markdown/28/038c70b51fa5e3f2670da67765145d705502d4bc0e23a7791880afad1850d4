@@ -1,0 +1,81 @@
+I"<p>Hello world!</p>
+
+<p>Hi everyone this will be an introduction on how to utilized dynamic analysis tools frida in Android. This post will go through on how to setup frida in rooted android and how to used it to make application bend to our will.</p>
+
+<h2> Setting Up The Environment </h2>
+
+<p>As I mentioned before, the android that we will be used is the rooted one, if you can get the real one, you can use a vm and set it up by yourself. I recommended to use genymotion to setup the vm, it’s easy and pretty straightforward to used(<a href="https://www.genymotion.com/download/">link</a>).</p>
+
+<p>NOTE: You have to created a personal account there, in order to operate it in your device and make sure you already have virtualbox installed.</p>
+
+<p>Next is to prepare the frida tools in the android and your pc. Basically frida worked like client and server. First, you have to run the frida server inside the rooted android and connect to the running server using the frida client. Where to ge it?</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida1.png" alt="PLIST-FILE_3" /></p>
+
+<p>For frida client you can installed it by using pip utility and based on the picture aboved I install the client in my kali linux with 14-2.13 as the version.</p>
+
+<p>To configure the server you have to download the binary from the official github repository(<a href="https://github.com/frida/frida/releases">link</a>). To play safe I’m just going to choose the binary version that matched with my frida client.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida2.png" alt="PLIST-FILE_3" /></p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida3.png" alt="PLIST-FILE_3" /></p>
+
+<p>You might be wondering why I choose to download the x86 arch for the server well its because the android vm running in genymotion is running x86 arch(you can check your vm arch by running the adb command above)</p>
+
+<p>Note: if you used a real device there’s a fat chance that it will be using ARM arch</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida6.png" alt="PLIST-FILE_3" /></p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida7.png" alt="PLIST-FILE_3" /></p>
+
+<p>Extract the zip file and put it into the “/data/local/tmp” folder in your rooted android, of course! you can used other directory as long as you remember it where.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida8.png" alt="PLIST-FILE_3" /></p>
+
+<p>Don’t forget to make the binary executable using chmod utility and execute it by running the following command:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">~# ./frida_server</code></pre></figure>
+
+<p>the command will open a server and ready to be used, open another tab to test the setup by running:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida9.png" alt="PLIST-FILE_3" /></p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">~# ./frida-ps <span class="nt">-U</span></code></pre></figure>
+
+<p>the following command is to dump running processes that we able to hook in it using frida.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida5.png" alt="PLIST-FILE_3" /></p>
+
+<p>if the frida setup successfully it will show you the above result.</p>
+
+<p>Finally, We are going to used the frida lab apk to used as ours practice app(<a href="https://rossmarks.uk/blog/fridalab/">link</a>) and once you downloaded installed it in your rooted android</p>
+
+<h2> Challenge 1 </h2>
+
+<p>Let’s jump right away into the first challenge!</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida10.png" alt="PLIST-FILE_3" /></p>
+
+<p>To get the above result you can use jadx-gui tools to reverse enginner and get the java source code of the application(<a href="https://github.com/skylot/jadx/releases/tag/v1.2.0">link</a>)</p>
+
+<p>Let’s take a look at the source code, when you open the application in the vm you will represented with serveral list of instruction to finish the challenge and if you click the “check” button it will check if you complete the challenge or not, if yes it will turn green and if not it will turn red. By observing the code for challenge 1, after the clicking button the application will check if function getChall01Int() in challenge_01 class is returning value 1.</p>
+
+<p>We have to changed the return value into 1 to passed this challenge!</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida11.png" alt="PLIST-FILE_3" /></p>
+
+<p>Tracing back to the class challenge_01 we can see that the function that we are looking for is returning a value from variable chall01. Thus, we need to access the variable and changed the value to 1 using frida.</p>
+
+<p>how to do it?</p>
+
+<p>simple!</p>
+
+<p>frida run by following the javascript file that contain instruction what program that it need to tamper with.</p>
+
+<p>Create a .js file and fill it with the below source code:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida12.png" alt="PLIST-FILE_3" /></p>
+
+<p>this is api s that frida offer for us to</p>
+
+:ET

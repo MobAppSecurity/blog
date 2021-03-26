@@ -1,4 +1,284 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-02-20T21:08:59+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">ARMv64-Exploit Development [chapter 0x2] - Exploit EIP</title><link href="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/18/arm64_exploit_development_chapter_0x2.html" rel="alternate" type="text/html" title="ARMv64-Exploit Development [chapter 0x2] - Exploit EIP" /><published>2021-02-18T10:44:25+07:00</published><updated>2021-02-18T10:44:25+07:00</updated><id>http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/18/arm64_exploit_development_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/18/arm64_exploit_development_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-03-26T18:56:11+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">Android Application Security [chapter 0x1] - Introduction to Frida</title><link href="http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html" rel="alternate" type="text/html" title="Android Application Security [chapter 0x1] - Introduction to Frida" /><published>2021-03-25T10:44:25+07:00</published><updated>2021-03-25T10:44:25+07:00</updated><id>http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;Hi everyone this will be an introduction on how to utilized dynamic analysis tools frida in Android. This post will go through on how to setup frida in rooted android and how to used it to make application bend to our will.&lt;/p&gt;
+
+&lt;h2&gt; Setting Up The Environment &lt;/h2&gt;
+
+&lt;p&gt;As I mentioned before, the android that we will be used is the rooted one, if you can get the real one, you can use a vm and set it up by yourself. I recommended to use genymotion to setup the vm, it’s easy and pretty straightforward to used(&lt;a href=&quot;https://www.genymotion.com/download/&quot;&gt;link&lt;/a&gt;).&lt;/p&gt;
+
+&lt;p&gt;NOTE: You have to created a personal account there, in order to operate it in your device and make sure you already have virtualbox installed.&lt;/p&gt;
+
+&lt;p&gt;Next is to prepare the frida tools in the android and your pc. Basically frida worked like client and server. First, you have to run the frida server inside the rooted android and connect to the running server using the frida client. Where to ge it?&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida1.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;For frida client you can installed it by using pip utility and based on the picture aboved I install the client in my kali linux with 14-2.13 as the version.&lt;/p&gt;
+
+&lt;p&gt;To configure the server you have to download the binary from the official github repository(&lt;a href=&quot;https://github.com/frida/frida/releases&quot;&gt;link&lt;/a&gt;). To play safe I’m just going to choose the binary version that matched with my frida client.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida2.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida3.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;You might be wondering why I choose to download the x86 arch for the server well its because the android vm running in genymotion is running x86 arch(you can check your vm arch by running the adb command above)&lt;/p&gt;
+
+&lt;p&gt;Note: if you used a real device there’s a fat chance that it will be using ARM arch&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida6.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida7.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Extract the zip file and put it into the “/data/local/tmp” folder in your rooted android, of course! you can used other directory as long as you remember it where.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida8.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Don’t forget to make the binary executable using chmod utility and execute it by running the following command:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;~# ./frida_server&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;the command will open a server and ready to be used, open another tab to test the setup by running:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida9.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;~# ./frida-ps &lt;span class=&quot;nt&quot;&gt;-U&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;the following command is to dump running processes that we able to hook in it using frida.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida5.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;if the frida setup successfully it will show you the above result.&lt;/p&gt;
+
+&lt;p&gt;Finally, We are going to used the frida lab apk to used as ours practice app(&lt;a href=&quot;https://rossmarks.uk/blog/fridalab/&quot;&gt;link&lt;/a&gt;) and once you downloaded installed it in your rooted android&lt;/p&gt;
+
+&lt;h2&gt; Challenge 1 &lt;/h2&gt;
+
+&lt;p&gt;Let’s jump right away into the first challenge!&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida10.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To get the above result you can use jadx-gui tools to reverse enginner and get the java source code of the application(&lt;a href=&quot;https://github.com/skylot/jadx/releases/tag/v1.2.0&quot;&gt;link&lt;/a&gt;)&lt;/p&gt;
+
+&lt;p&gt;Let’s take a look at the source code, when you open the application in the vm you will represented with serveral list of instruction to finish the challenge and if you click the “check” button it will check if you complete the challenge or not, if yes it will turn green and if not it will turn red. By observing the code for challenge 1, after clicking the button, the application will check if function getChall01Int() in challenge_01 class is returning value 1.&lt;/p&gt;
+
+&lt;p&gt;We have to changed the return value into 1 to passed this challenge!&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida11.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Tracing back to the class challenge_01 we can see that the function that we are looking for is returning a value from variable chall01. Thus, we need to access the variable and changed the value to 1 using frida.&lt;/p&gt;
+
+&lt;p&gt;how to do it?&lt;/p&gt;
+
+&lt;p&gt;simple!&lt;/p&gt;
+
+&lt;p&gt;frida run by following the javascript file that contain instruction what program that it need to tamper with.&lt;/p&gt;
+
+&lt;p&gt;Create a .js file and fill it with the below source code:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida15.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;this is one of many api functions that frida offer for us to used, in this challenge we are going to use two function:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Java.perform() that will ensure to attach frida in the current thread of running application and execute our javascript function to tamper the code in runtime. We are going to used this alot!&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Java.use() to get a java class object and return a wrapper of javascript object so we can access class members. As you can see from the source code above we change the value of the static variable named chall01 into one.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida13.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Now! you have to inject the javascript file to the application by running the above command.&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;-U is to connect frida client through USB cable&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;–no-pause to continue the execution of the program&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;-l define the script that we are going to inject&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;The “uk.rossmarks.fridalab” is the name of the application name from fridalab.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida14.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Clicking the button of “check” again will make the textview of challenge 1 turn green so that means we solve it, cool right?!&lt;/p&gt;
+
+&lt;h2&gt; Challenge 2 &amp;amp; Challenge 3&lt;/h2&gt;
+
+&lt;p&gt;Move on! to the second and third challenge.&lt;/p&gt;
+
+&lt;p&gt;In the second challenge you need to run chall02() function using frida. If we look at the source code the corresponding function is located at MainActivity class and the login is pretty simple it flip the second index of the array in completeArr variable to 1.&lt;/p&gt;
+
+&lt;p&gt;While the third challenge demand you to tamper the return value of chall03() function into true.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida17.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida18.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In order to complete these two levels you can use the API Java.choose() function this will allow the frida to scan throughout the heap memory and find the class that we want to tamper and once frida find the correct class,  we are able to access the actual code that is run in the application.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida19.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To tamper with implementation of function inside a class we can use the “implementation” method that offer by the instance parameter and shierly! we can assign it with a new function, in this case we overwrite the actual code and change it to always return true.&lt;/p&gt;
+
+&lt;p&gt;As you can see I merge the current script with previous javascript challenge. I like to do this in this way so I can have a clean result.&lt;/p&gt;
+
+&lt;h2&gt; Challenge 4 &amp;amp; Challenge 5&lt;/h2&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida20.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida21.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The fourth and the fifth challenge have similar approach with two previous challenge respectively. In the fourth challenge we are instructed to call a function inside class but this time we need to send parameter with it, while the fifth challenge expected us to also tamper with the function chall05 but this time it is designed with hardcoded parameter.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida22.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Just like you predict! for fourth challenge, you can just do it excatly as the second with additional parameter, while in the fifth challenge, you tamper with the function parameter by calling the function itself with different parameter.&lt;/p&gt;
+
+&lt;h2&gt; Challenge 6&lt;/h2&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida23.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida24.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Out of all the challenge I think the six challenge is the most confusing one. Okay! lets go through the source code to get the big idea of how challenge work. You are expected to wait for ten second and you have to call the function chall06() with the correct parameter.&lt;/p&gt;
+
+&lt;p&gt;why we need to wait for ten second?&lt;/p&gt;
+
+&lt;p&gt;Take a look at the challenge_06 class, there is function named confirmChall06() that do comparison between the value of “i” which is the parameter that passed to the function and static variable chall06, along with comparison between value from System.currentTimeMillis that will return value of the current time in epoch and another static variable called timeStart add with value 10000.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida25.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The value of static variable timeStart is set when the function startTime() is called. This function is called in the MainActivity automatically when the user is open the application.&lt;/p&gt;
+
+&lt;p&gt;The value of static variable chall06 is set when the function addChall06() is called and when its called the program provide with random number as the parameter. This function is called in MainActivity automatically after the startTime() run.&lt;/p&gt;
+
+&lt;p&gt;We need to make sure this two conditions meet true to finish the six challenge the first comparison can be meet by calling the confirmChall06() function with the parameter with value from chall06 variable. But in order to meet the second condition we have to wait for ten second since if we call the confirmChall06() to0 early the System.currentTimeMillis value will be less than combined value between timeStart.&lt;/p&gt;
+
+&lt;p&gt;So how do we do it?&lt;/p&gt;
+
+&lt;p&gt;Frida offer function named setTimeout() this will help us to wait for ten second so our timing is right and when the time comes we will tamper the addChall06 function using the overload() api function in order to set the correct value consistenly.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida27.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida26.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To run this script we cannot run it like the previous challenge while the app is still running, we need to run the script at the beginning of the application. To do this you can pass the following parameter like the above figure. This will spawn a new process for the application and inject our script from the start.&lt;/p&gt;
+
+&lt;p&gt;Remember you can combined this script with the previous one since it will cause confusion to the frida, so you have to put the source code above outside of the Java.perform().&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida28.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Challenge 7 &lt;/h2&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida29.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida30.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;For challenge 7, you are expected to do a brute force to find out the correct PIN that set by the application. The application set the PIN at runtime when it finish running the six challenge and the value is a 4 digit random number.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida32.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To solve this challenge, you can use the above source code. All we have to do is to call check07Pin function from challenge_07 class and provide a number between 1000-9999 in loop until we get the right PIN.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida33.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida34.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Challenge 8 &lt;/h2&gt;
+
+&lt;p&gt;Last challenge, at last! It took me a while to finish this challenge because there is a minor modification on how frida handle java object in the newer version. I’m not gonna lie in this challenge, I used the code from &lt;a href=&quot;https://codeshare.frida.re/@TheZ3ro/fridalab-solver/&quot;&gt;this&lt;/a&gt; but there is a little tweak in it.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida35.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In this challenge you are told to change the text of the button from “check” to “Confirm”, to do that you can use the below source code.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida38.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida36.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In order to tamper Android UI you have to make sure that you are attached to the main thread, you can use Java.scheduleOnMainThread() and once you there you need to access the button object used by the application. But how? there so many of them! you can specify which button object you want to tamper by using the findViewById() method from the object and passed the number that represent UID of the UI element you check this in the R class file.&lt;/p&gt;
+
+&lt;p&gt;Finally to used this object you need to use Java.cast() function that get the properties of the app directly.&lt;/p&gt;
+
+&lt;p&gt;To make this even cooler I compile all of the script into one source code:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-js&quot; data-lang=&quot;js&quot;&gt;&lt;span class=&quot;nx&quot;&gt;setTimeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+&lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;perform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+	&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;challenge_01&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;use&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uk.rossmarks.fridalab.challenge_01&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+	&lt;span class=&quot;nx&quot;&gt;challenge_01&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall01&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;value&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+
+	&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+	&lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;choose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uk.rossmarks.fridalab.MainActivity&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,{&lt;/span&gt;
+        &lt;span class=&quot;na&quot;&gt;onMatch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+                &lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall02&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;();&lt;/span&gt;
+		&lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall03&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;implementation&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;return&lt;/span&gt; &lt;span class=&quot;kc&quot;&gt;true&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+		&lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall04&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;frida&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;implementation&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;arg1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;this&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall05&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;frida&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+
+		&lt;span class=&quot;nx&quot;&gt;main&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;scheduleOnMainThread&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+        	        &lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;challenge_08&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;use&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;android.widget.Button&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+              		&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;button&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;findViewById&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;2131165231&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+			&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;check&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;cast&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;button&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;challenge_08&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+			&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;string&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;use&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;java.lang.String&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+			&lt;span class=&quot;nx&quot;&gt;check&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;setText&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;string&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;$new&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;Confirm&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+	        &lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+
+        &lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;onComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	
+	&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+
+	&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;challenge_07&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;use&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uk.rossmarks.fridalab.challenge_07&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+        &lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;warn&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;target PIN:&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;challenge_07&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall07&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+        &lt;span class=&quot;k&quot;&gt;for&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;i&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;9999&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;=&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;--&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+                &lt;span class=&quot;k&quot;&gt;if&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;challenge_07&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;check07Pin&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;toString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;())){&lt;/span&gt;
+			&lt;span class=&quot;nx&quot;&gt;main&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall07&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;i&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;toString&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;());&lt;/span&gt;
+			&lt;span class=&quot;k&quot;&gt;break&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;;&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+		
+        &lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;   	
+
+&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+
+&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;3000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+
+&lt;span class=&quot;nx&quot;&gt;setTimeout&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+	&lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;perform&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){&lt;/span&gt;
+		&lt;span class=&quot;kd&quot;&gt;var&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;challenge_06&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;use&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;uk.rossmarks.fridalab.challenge_06&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+		&lt;span class=&quot;nx&quot;&gt;challenge_06&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;addChall06&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;overload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;int&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;).&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;implementation&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;arg0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+			&lt;span class=&quot;nx&quot;&gt;console&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;log&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;click now!&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+			&lt;span class=&quot;nx&quot;&gt;Java&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;choose&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;s1&quot;&gt;uk.rossmarks.fridalab.MainActivity&lt;/span&gt;&lt;span class=&quot;dl&quot;&gt;'&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,{&lt;/span&gt;
+				&lt;span class=&quot;na&quot;&gt;onMatch&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;){&lt;/span&gt;
+					&lt;span class=&quot;nx&quot;&gt;instance&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall06&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;challenge_06&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;chall06&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;nx&quot;&gt;value&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;
+				&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;na&quot;&gt;onComplete&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;&lt;span class=&quot;kd&quot;&gt;function&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(){}&lt;/span&gt;
+			&lt;span class=&quot;p&quot;&gt;});&lt;/span&gt;
+		&lt;span class=&quot;p&quot;&gt;}&lt;/span&gt;
+	&lt;span class=&quot;p&quot;&gt;})&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;},&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;10000&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;You saved into one file and run it like below:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;~# frida &lt;span class=&quot;nt&quot;&gt;-U&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-l&lt;/span&gt; solve.js &lt;span class=&quot;nt&quot;&gt;-f&lt;/span&gt; uk.rossmarks.fridalab&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;After you run this script, you have to immediately enter “%resume” so every function can take it places at the right time.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/frida/frida37.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;That’s all I hope you enjoy this post and see you in the next Android Application Security Topic.&lt;/p&gt;</content><author><name></name></author><category term="Android_Application_Security" /><summary type="html">Hello world!</summary></entry><entry><title type="html">ARMv64-Exploit Development [chapter 0x2] - No Boundary</title><link href="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/19/arm64_exploit_development_chapter_0x2.html" rel="alternate" type="text/html" title="ARMv64-Exploit Development [chapter 0x2] - No Boundary" /><published>2021-02-19T10:44:25+07:00</published><updated>2021-02-19T10:44:25+07:00</updated><id>http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/19/arm64_exploit_development_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/arm_exploit_development_tutorial/2021/02/19/arm64_exploit_development_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
 
 &lt;p&gt;This is going to be the part two of ARM exploit development series, last time we are talking about some fundamentals behind ARM architecture, how to debug it and also create a very simple ARM64 hello world program from assembly.&lt;/p&gt;
 
@@ -787,31 +1067,6 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
   &lt;li&gt;
     &lt;p&gt;ARM Exploit Development (IOS Jailbreaking)&lt;/p&gt;
   &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Android Malware Analysis (Counter-Exploit and Reverse Engineering)&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Windows Exploit Development (Preparation for OSED)&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Little bit of API Security (This will be helpful for mobile pentesting in real life)&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Reverse Engineering and Pwn CTF (I like to stay sharp)&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
-    &lt;p&gt;Target:&lt;/p&gt;
-  &lt;/li&gt;
-&lt;/ul&gt;
-
-&lt;p&gt;pwnable.kr&lt;/p&gt;
-
-&lt;p&gt;pwnable.tw&lt;/p&gt;
-
-&lt;p&gt;io.netgarage.org&lt;/p&gt;
-
-&lt;ul&gt;
-  &lt;li&gt;Applied Cryptography (Matasano)&lt;/li&gt;
 &lt;/ul&gt;
 
 &lt;p&gt;Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/&quot;&gt;old blog&lt;/a&gt;) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog?&lt;/p&gt;
