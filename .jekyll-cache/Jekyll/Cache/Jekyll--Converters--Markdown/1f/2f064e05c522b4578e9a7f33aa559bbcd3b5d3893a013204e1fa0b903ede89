@@ -1,4 +1,4 @@
-I"f_<p>Hello world!</p>
+I"�_<p>Hello world!</p>
 
 <p>Hi everyone this will be an introduction on how to utilized dynamic analysis tools frida in Android. This post will go through on how to setup frida in rooted android and how to used it to make application bend to our will.</p>
 
@@ -10,27 +10,27 @@
 
 <p>Next is to prepare the frida tools in the android and your pc. Basically frida worked like client and server. First, you have to run the frida server inside the rooted android and connect to the running server using the frida client. Where to ge it?</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida1.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida1.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>For frida client you can installed it by using pip utility and based on the picture aboved I install the client in my kali linux with 14-2.13 as the version.</p>
 
 <p>To configure the server you have to download the binary from the official github repository(<a href="https://github.com/frida/frida/releases">link</a>). To play safe I’m just going to choose the binary version that matched with my frida client.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida2.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida2.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida3.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida3.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>You might be wondering why I choose to download the x86 arch for the server well its because the android vm running in genymotion is running x86 arch(you can check your vm arch by running the adb command above)</p>
 
 <p>Note: if you used a real device there’s a fat chance that it will be using ARM arch</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida6.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida6.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida7.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida7.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Extract the zip file and put it into the “/data/local/tmp” folder in your rooted android, of course! you can used other directory as long as you remember it where.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida8.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida8.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Don’t forget to make the binary executable using chmod utility and execute it by running the following command:</p>
 
@@ -38,13 +38,13 @@
 
 <p>the command will open a server and ready to be used, open another tab to test the setup by running:</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida9.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida9.PNG" alt="PLIST-FILE_3" /></p>
 
 <figure class="highlight"><pre><code class="language-bash" data-lang="bash">~# ./frida-ps <span class="nt">-U</span></code></pre></figure>
 
 <p>the following command is to dump running processes that we able to hook in it using frida.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida5.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida5.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>if the frida setup successfully it will show you the above result.</p>
 
@@ -54,7 +54,7 @@
 
 <p>Let’s jump right away into the first challenge!</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida10.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida10.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>To get the above result you can use jadx-gui tools to reverse enginner and get the java source code of the application(<a href="https://github.com/skylot/jadx/releases/tag/v1.2.0">link</a>)</p>
 
@@ -62,7 +62,7 @@
 
 <p>We have to changed the return value into 1 to passed this challenge!</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida11.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida11.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Tracing back to the class challenge_01 we can see that the function that we are looking for is returning a value from variable chall01. Thus, we need to access the variable and changed the value to 1 using frida.</p>
 
@@ -74,7 +74,7 @@
 
 <p>Create a .js file and fill it with the below source code:</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida15.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida15.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>this is one of many api functions that frida offer for us to used, in this challenge we are going to use two function:</p>
 
@@ -87,7 +87,7 @@
   </li>
 </ul>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida13.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida13.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Now! you have to inject the javascript file to the application by running the above command.</p>
 
@@ -105,7 +105,7 @@
 
 <p>The “uk.rossmarks.fridalab” is the name of the application name from fridalab.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida14.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida14.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Clicking the button of “check” again will make the textview of challenge 1 turn green so that means we solve it, cool right?!</p>
 
@@ -117,13 +117,13 @@
 
 <p>While the third challenge demand you to tamper the return value of chall03() function into true.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida17.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida17.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida18.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida18.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>In order to complete these two levels you can use the API Java.choose() function this will allow the frida to scan throughout the heap memory and find the class that we want to tamper and once frida find the correct class,  we are able to access the actual code that is run in the application.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida19.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida19.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>To tamper with implementation of function inside a class we can use the “implementation” method that offer by the instance parameter and shierly! we can assign it with a new function, in this case we overwrite the actual code and change it to always return true.</p>
 
@@ -131,21 +131,21 @@
 
 <h2> Challenge 4 &amp; Challenge 5</h2>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida20.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida20.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida21.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida21.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>The fourth and the fifth challenge have similar approach with two previous challenge respectively. In the fourth challenge we are instructed to call a function inside class but this time we need to send parameter with it, while the fifth challenge expected us to also tamper with the function chall05 but this time it is designed with hardcoded parameter.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida22.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida22.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Just like you predict! for fourth challenge, you can just do it excatly as the second with additional parameter, while in the fifth challenge, you tamper with the function parameter by calling the function itself with different parameter.</p>
 
 <h2> Challenge 6</h2>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida23.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida23.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida24.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida24.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>Out of all the challenge I think the six challenge is the most confusing one. Okay! lets go through the source code to get the big idea of how challenge work. You are expected to wait for ten second and you have to call the function chall06() with the correct parameter.</p>
 
@@ -153,7 +153,7 @@
 
 <p>Take a look at the challenge_06 class, there is function named confirmChall06() that do comparison between the value of “i” which is the parameter that passed to the function and static variable chall06, along with comparison between value from System.currentTimeMillis that will return value of the current time in epoch and another static variable called timeStart add with value 10000.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida25.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida25.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>The value of static variable timeStart is set when the function startTime() is called. This function is called in the MainActivity automatically when the user is open the application.</p>
 
@@ -165,43 +165,43 @@
 
 <p>Frida offer function named setTimeout() this will help us to wait for ten second so our timing is right and when the time comes we will tamper the addChall06 function using the overload() api function in order to set the correct value consistenly.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida27.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida27.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida26.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida26.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>To run this script we cannot run it like the previous challenge while the app is still running, we need to run the script at the beginning of the application. To do this you can pass the following parameter like the above figure. This will spawn a new process for the application and inject our script from the start.</p>
 
 <p>Remember you can combined this script with the previous one since it will cause confusion to the frida, so you have to put the source code above outside of the Java.perform().</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida28.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida28.PNG" alt="PLIST-FILE_3" /></p>
 
 <h2> Challenge 7 </h2>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida29.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida29.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida30.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida30.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>For challenge 7, you are expected to do a brute force to find out the correct PIN that set by the application. The application set the PIN at runtime when it finish running the six challenge and the value is a 4 digit random number.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida32.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida32.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>To solve this challenge, you can use the above source code. All we have to do is to call check07Pin function from challenge_07 class and provide a number between 1000-9999 in loop until we get the right PIN.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida33.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida33.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida34.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida34.PNG" alt="PLIST-FILE_3" /></p>
 
 <h2> Challenge 8 </h2>
 
 <p>Last challenge, at last! It took me a while to finish this challenge because there is a minor modification on how frida handle java object in the newer version. I’m not gonna lie in this challenge, I used the code from <a href="https://codeshare.frida.re/@TheZ3ro/fridalab-solver/">this</a> but there is a little tweak in it.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida35.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida35.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>In this challenge you are told to change the text of the button from “check” to “Confirm”, to do that you can use the below source code.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida38.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida38.PNG" alt="PLIST-FILE_3" /></p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida36.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida36.PNG" alt="PLIST-FILE_3" /></p>
 
 <p>In order to tamper Android UI you have to make sure that you are attached to the main thread, you can use Java.scheduleOnMainThread() and once you there you need to access the button object used by the application. But how? there so many of them! you can specify which button object you want to tamper by using the findViewById() method from the object and passed the number that represent UID of the UI element you check this in the R class file.</p>
 
@@ -276,6 +276,8 @@
 
 <p>After you run this script, you have to immediately enter “%resume” so every function can take it places at the right time.</p>
 
-<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida37.png" alt="PLIST-FILE_3" /></p>
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida/frida37.PNG" alt="PLIST-FILE_3" /></p>
+
+<p>That’s all I hope you enjoy this post and see you in the next Android Application Security Topic.</p>
 
 :ET
