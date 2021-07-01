@@ -13,12 +13,7 @@ Hello world! For my first post, I think it's a good idea to introduce this blog 
 - ARM Exploit Development (IOS Jailbreaking)
 
 
-Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger([old blog][old-blogs]) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog? 
-
-
-1. Because I want to have a fresh start
-2. I think blogger have kinda pale design so its kinda not suit for my taste
-3. I want to challenge myself by using a new framework to create a blog
+Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger([old blog][old-blogs]). I will used this to post more CTF, red team and blue team stuff.
 
 That's all I think it's enough for introduction and I hope you enjoy this blog, cheers!
 
