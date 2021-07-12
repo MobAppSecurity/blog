@@ -1,0 +1,85 @@
+I"�<p>Hello world!</p>
+
+<p>Last time, we do little bit of experiment on how powerful frida could be used to aid our android pentesting analysis(<a href="https://mobappsecurity.github.io/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html">post</a>), however, it left us with a big question “whether we can use frida to tamper native library in Android or not ?”</p>
+
+<p>Well! the answer is “YES! absolutely”</p>
+
+<p>Thus, in this post I would like to continue this saga by trying to solve OWASP-MSTG challenge level 1 - level 3 using frida(<a href="https://github.com/OWASP/owasp-mstg/tree/master/Crackmes/Android">link</a>) and by going through this challenge, you will have good general idea how to used frida to analyse native library in Android.</p>
+
+<p>Don’t worry the last two level will be cover in the next post because I don’t want to overwhelm and make you guys bored.</p>
+
+<h2> What is Android Native Library? Why you should care about it? </h2>
+
+<p>As you know, you can create Android Application by Java or Kotlin programming language, this language give you a good features to interact with underlying Android API to do a lot of cool stuff in you app. But there are certain cases, when you want to incoperate your app with lower level programming like C or C++ such as cryptography, openGL or any task that required intense memory management, this is where Android Native Library comes in.</p>
+
+<p>A lot of people, thinks that this is a good place to stored a secret inside the application since you have to deal with assemblies and memory, but throughout of the post you will found out that given enough time and motivation hackers always find a way.</p>
+
+<p>Android native library shipped along with the .apk file and stored in “/lib/” library if you try to decompile it with apktool and the file name usually have extension .so. Usually to make the native library can be implemented in a lot devices, developer tend to create several architecture version of the library such as x86, x86_64, armv7 and armv8.</p>
+
+<h2> Enough Talk Let's Go to Level 1 </h2>
+
+<p>Generally all the challenges ask you to get the secret string or password inside the app but as the level increase it’s going to be more difficult to get the password since there are a lot of protection in the app.</p>
+
+<p>There are two things that we need to do accomplished the first level:</p>
+
+<ul>
+  <li>
+    <p>Bypass the root detection;</p>
+  </li>
+  <li>
+    <p>Intercept the Decryption process to get the password.</p>
+  </li>
+</ul>
+
+<h3> 1. Bypass the root detection </h3>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida1.png" alt="PLIST-FILE_3" /></p>
+
+<p>The following piece of code is the one that responsible to check if the app is installed in rooted device or not. You will find it in sg.vantagepoint.uncrackable1.MainActivity class in onCreate() method and as you can see it call another class named “c” located in sg.vantagepoint.a.c and used its function named “a”, “b” and “c”.</p>
+
+<p>If you try to trace the root checking method, you will end up in this piece of source code:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida2.png" alt="PLIST-FILE_3" height="400px" width="600px" /></p>
+
+<p>Each of this function return a boolean data type(true/false) if one of this check is true it will tell the application to exit. Thus, we will create a frida script that will intercept all of this function to always return false.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">Java</span><span class="p">.</span><span class="nx">perform</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+	<span class="kd">var</span> <span class="nx">a_function</span> <span class="o">=</span> <span class="nx">Java</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">sg.vantagepoint.a.c</span><span class="dl">"</span><span class="p">);</span>
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function a</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function b</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function c</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+<span class="p">});</span></code></pre></figure>
+
+<p>The script is pretty straightfoward, we attach frida to current thread of Java VM using Java.perform() and while attaching we tamper the previous mentioned three functions to make it always return false using Java.use().</p>
+
+<p>We need to run the script at the beginning, you can achieve it using this command:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">~# frida <span class="nt">-U</span> <span class="nt">-l</span> poc.js <span class="nt">-f</span> owasp.mstg.uncrackable1</code></pre></figure>
+
+<p>After that, frida will prompt you to type “%resume” inside the console to continue the execution. You should be able to navigate properly in the app without getting kicked.</p>
+
+<h3> 2. Intercept the Decryption process to get the password </h3>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida3.png" alt="PLIST-FILE_3" /></p>
+
+<p>The following is the source code that trigger decryption process of the application. First, it starts by getting input that provided by user then passed to the other function which is “a.a” located at sg.vantagepoint.uncrackable1.a.</p>
+
+<p>By visiting the file you will encounter the following source code:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida4.png" alt="PLIST-FILE_3" /></p>
+
+<p>The user input will be compare to an encrypted string that will be later decrypted by “sg.vantagepoint.a.a.a” class.</p>
+
+:ET

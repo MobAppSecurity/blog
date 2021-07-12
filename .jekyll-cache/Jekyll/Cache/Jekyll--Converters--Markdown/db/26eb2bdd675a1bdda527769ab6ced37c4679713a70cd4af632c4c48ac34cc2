@@ -1,0 +1,178 @@
+I"hE<p>Hello world!</p>
+
+<p>Last time, we do little bit of experiment on how powerful frida could be used to aid our android pentesting analysis(<a href="https://mobappsecurity.github.io/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html">post</a>), however, it left us with a big question “whether we can use frida to tamper native library in Android or not ?”</p>
+
+<p>Well! the answer is “YES! absolutely”</p>
+
+<p>Thus, in this post I would like to continue this saga by trying to solve OWASP-MSTG challenge level 1 - level 3 using frida(<a href="https://github.com/OWASP/owasp-mstg/tree/master/Crackmes/Android">link</a>) and by going through this challenge, you will have good general idea how to used frida to analyse native library in Android.</p>
+
+<p>Don’t worry the last two level will be cover in the next post because I don’t want to overwhelm and make you guys bored.</p>
+
+<h2> What is Android Native Library? Why you should care about it? </h2>
+
+<p>As you know, you can create Android Application by Java or Kotlin programming language, this language give you a good features to interact with underlying Android API to do a lot of cool stuff in you app. But there are certain cases, when you want to incoperate your app with lower level programming like C or C++ such as cryptography, openGL or any task that required intense memory management, this is where Android Native Library comes in.</p>
+
+<p>A lot of people, thinks that this is a good place to stored a secret inside the application since you have to deal with assemblies and memory, but throughout of the post you will found out that given enough time and motivation hackers always find a way.</p>
+
+<p>Android native library shipped along with the .apk file and stored in “/lib/” library if you try to decompile it with apktool and the file name usually have extension .so. Usually to make the native library can be implemented in a lot devices, developer tend to create several architecture version of the library such as x86, x86_64, armv7 and armv8.</p>
+
+<h2> Enough Talk Let's Go to Level 1 </h2>
+
+<p>Generally all the challenges ask you to get the secret string or password inside the app but as the level increase it’s going to be more difficult to get the password since there are a lot of protection in the app.</p>
+
+<p>There are two things that we need to do accomplished the first level:</p>
+
+<ul>
+  <li>
+    <p>Bypass the root detection;</p>
+  </li>
+  <li>
+    <p>Intercept the Decryption process to get the password.</p>
+  </li>
+</ul>
+
+<h3> 1. Bypass the root detection </h3>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida1.png" alt="PLIST-FILE_3" /></p>
+
+<p>The following piece of code is the one that responsible to check if the app is installed in rooted device or not. You will find it in sg.vantagepoint.uncrackable1.MainActivity class in onCreate() method and as you can see it call another class named “c” located in sg.vantagepoint.a.c and used its function named “a”, “b” and “c”.</p>
+
+<p>If you try to trace the root checking method, you will end up in this piece of source code:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida2.png" alt="PLIST-FILE_3" height="400px" width="600px" /></p>
+
+<p>Each of this function return a boolean data type(true/false) if one of this check is true it will tell the application to exit. Thus, we will create a frida script that will intercept all of this function to always return false.</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">Java</span><span class="p">.</span><span class="nx">perform</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+	<span class="kd">var</span> <span class="nx">a_function</span> <span class="o">=</span> <span class="nx">Java</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">sg.vantagepoint.a.c</span><span class="dl">"</span><span class="p">);</span>
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function a</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function b</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function c</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+<span class="p">});</span></code></pre></figure>
+
+<p>The script is pretty straightfoward, we attach frida to current thread of Java VM using Java.perform() and while attaching we tamper the previous mentioned three functions to make it always return false using Java.use().</p>
+
+<p>We need to run the script at the beginning, you can achieve it using this command:</p>
+
+<figure class="highlight"><pre><code class="language-bash" data-lang="bash">~# frida <span class="nt">-U</span> <span class="nt">-l</span> poc.js <span class="nt">-f</span> owasp.mstg.uncrackable1</code></pre></figure>
+
+<p>After that, frida will prompt you to type “%resume” inside the console to continue the execution. You should be able to navigate properly in the app without getting kicked.</p>
+
+<h3> 2. Intercept the Decryption process to get the password </h3>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida3.png" alt="PLIST-FILE_3" /></p>
+
+<p>The following is the source code that trigger decryption process of the application. First, it starts by getting input that provided by user then passed to the other function which is “a.a” located at sg.vantagepoint.uncrackable1.a.</p>
+
+<p>By visiting the file you will encounter the following source code:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida4.png" alt="PLIST-FILE_3" /></p>
+
+<p>The user input will be compare to an encrypted string that will be later decrypted by “sg.vantagepoint.a.a.a” function. There are two parameters that passed to it and by following the code we can see that the first paremeter is the key and the second parameter is encrypted text.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida5.png" alt="PLIST-FILE_3" /></p>
+
+<p>Now! we have a good understanding on how the program check whether we put the correct secret or not, so what sould we do? we can sniff the result of the decryption(“sg.vantagepoint.a.a.a” function)</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">Java</span><span class="p">.</span><span class="nx">perform</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+	<span class="kd">var</span> <span class="nx">a_function</span> <span class="o">=</span> <span class="nx">Java</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">sg.vantagepoint.a.c</span><span class="dl">"</span><span class="p">);</span>
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function a</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function b</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function c</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="kd">var</span> <span class="nx">plain_text_string</span> <span class="o">=</span> <span class="nx">Java</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">java.lang.String</span><span class="dl">"</span><span class="p">);</span>
+	<span class="kd">var</span> <span class="nx">enc_function</span> <span class="o">=</span> <span class="nx">Java</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">sg.vantagepoint.a.a</span><span class="dl">"</span><span class="p">);</span>
+
+	<span class="nx">enc_function</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(</span><span class="nx">byte0</span><span class="p">,</span> <span class="nx">byte1</span><span class="p">){</span>
+		<span class="kd">var</span> <span class="nx">plain_text_bin</span> <span class="o">=</span> <span class="k">this</span><span class="p">.</span><span class="nx">a</span><span class="p">(</span><span class="nx">byte0</span><span class="p">,</span><span class="nx">byte1</span><span class="p">);</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Plain text: </span><span class="dl">"</span> <span class="o">+</span> <span class="nx">plain_text_string</span><span class="p">.</span><span class="nx">$new</span><span class="p">(</span><span class="nx">plain_text_bin</span><span class="p">));</span>
+		<span class="k">return</span> <span class="nx">plain_text_bin</span><span class="p">;</span>
+	<span class="p">}</span>
+<span class="p">});</span></code></pre></figure>
+
+<p>First, we initialize two variables “plain_text_string” used to convert the decrypted string to a readable data, “instance.doFinal()” function will return a byte array. The second variable is to intercept the “sg.vantagepoint.a.a.a” function.</p>
+
+<p>Next, we tamper the function and get the result by calling the original function “this.a(byte0, byte1)” and stored in temporary variable called “plain_text_bin”. We convert the result to a string by creating a new object you can do this adding “$new” and don’t forget to return the execution.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida6.png" alt="PLIST-FILE_3" /></p>
+
+<p>cool! we got the secret string, that’s a good warm up lets move to the main course.</p>
+
+<h2> Let's Go to Level 2 </h2>
+
+<p>As I mentioned in the intro, the goal is still the same it’s to get the secret string from the App. Again, you have to bypass the root detection and reverse engineer the app but this time the input check is not in the android app but its in the native library.</p>
+
+<h3> 1. Bypass the root detection </h3>
+
+<p>The approach is still the same with the previous level, but the root checking is moved to other file, thus, we need to update the script like this:</p>
+
+<figure class="highlight"><pre><code class="language-js" data-lang="js"><span class="nx">Java</span><span class="p">.</span><span class="nx">perform</span><span class="p">(</span><span class="kd">function</span><span class="p">(){</span>
+	<span class="kd">var</span> <span class="nx">a_function</span> <span class="o">=</span> <span class="nx">Java</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="dl">"</span><span class="s2">sg.vantagepoint.a.b</span><span class="dl">"</span><span class="p">);</span>
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">a</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function a</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">b</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function b</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+	<span class="nx">a_function</span><span class="p">.</span><span class="nx">c</span><span class="p">.</span><span class="nx">implementation</span> <span class="o">=</span> <span class="kd">function</span><span class="p">(){</span>
+		<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">Tamper function c</span><span class="dl">"</span><span class="p">);</span>
+		<span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+	<span class="p">}</span>
+
+<span class="p">});</span></code></pre></figure>
+
+<p>We basically just changed the function we want to intercept which is sg.vantagepoint.a.b this would be enough to bypass the root detection.</p>
+
+<h3> 2. Intercept the Native Function </h3>
+
+<p>Before we begin to intercept the native function lets try to figure out the flow of the app. The decryption process starts when user submit a secret string to the app and this is the code that responsible for it(Located: sg.vantagepoint.uncrackable2.MainActivity):</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida7.png" alt="PLIST-FILE_3" /></p>
+
+<p>As you can see that our input is passed to this function “this.m.a(obj)”. Tracing the source of function, will lead to us this line of code(Note: this code is still in sg.vantagepoint.uncrackable2.MainActivity)</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida8.png" alt="PLIST-FILE_3" /></p>
+
+<p>The m function is actually come from class named “CodeCheck”. But as you observed under the m function there is initialization of native library:</p>
+
+<figure class="highlight"><pre><code class="language-java" data-lang="java"><span class="kd">static</span><span class="o">{</span>
+	<span class="nc">System</span><span class="o">.</span><span class="na">loadLibrary</span><span class="o">(</span><span class="s">"foo"</span><span class="o">);</span>
+
+<span class="o">}</span></code></pre></figure>
+
+<p>If you ever found this type of code, this means that the app is using native library and its named is “libfoo.so”(this is the standard format used by android no matter what names you used for the native library it will be added lib at the beginning and .so as the extension)</p>
+
+<p>Now lets jump to “CodeCheck” class to see the source code, like below:</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/frida2/frida9.png" alt="PLIST-FILE_3" /></p>
+
+<p>The class is responsible to check whether our input is correct or not but it used native function called “bar”(Notice the “native” keyword used in the initialization, this is how android bridging the native library to the app)it takes bytearray as the parameter and was used in a() function.</p>
+
+:ET

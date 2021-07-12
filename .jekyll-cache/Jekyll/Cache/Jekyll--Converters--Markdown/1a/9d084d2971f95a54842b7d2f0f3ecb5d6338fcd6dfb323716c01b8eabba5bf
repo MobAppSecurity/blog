@@ -1,0 +1,11 @@
+I"�<p>Hello world!</p>
+
+<p>Last time, we do little bit of experiment on how powerful frida could be used to aid our android pentesting analysis(<a href="https://mobappsecurity.github.io/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html">post</a>), however, it left us with a big question “whether we can use frida to tamper native library in Android or not ?”</p>
+
+<p>Well! the answer is “YES! absolutely”</p>
+
+<p>Thus, in this post I would like to continue this saga by trying to solve OWASP-MSTG challenge level 1 - level 3 using frida(<a href="https://github.com/OWASP/owasp-mstg/tree/master/Crackmes/Android">link</a>) and by going through this challenge, you will have good general idea how to used frida to analyse native library in Android.</p>
+
+<p>Don’t worry the last two level will be cover in the next post because I don’t want to overwhelm and make you guys bored.</p>
+
+:ET
