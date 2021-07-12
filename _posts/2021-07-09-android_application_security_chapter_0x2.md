@@ -15,6 +15,8 @@ Thus, in this post I would like to continue this saga by trying to solve OWASP-M
 
 Don't worry the last two level will be cover in the next post because I don't want to overwhelm and make you guys bored.
 
+If you want just directly download the frida script, you can go to this [github link][github-link]
+
 <h2> What is Android Native Library? Why you should care about it? </h2>
 
 As you know, you can create Android Application by Java or Kotlin programming language, this language give you a good features to interact with underlying Android API to do a lot of cool stuff in you app. But there are certain cases, when you want to incoperate your app with lower level programming like C or C++ such as cryptography, openGL or any task that required intense memory management, this is where Android Native Library comes in. 
@@ -679,3 +681,4 @@ Cool! so thats all for this post, I hope you enjoy it and stay tuned for more cy
 [ghidra-link]: https://ghidra-sre.org/
 [protection-link]: https://bestofcpp.com/repo/darvincisec-AntiDebugandMemoryDump
 [nibarius-link]: https://nibarius.github.io/learning-frida/2020/06/05/uncrackable3
+[github-link]: https://github.com/MobAppSecurity/android_owasp_mstg_uncrackable
