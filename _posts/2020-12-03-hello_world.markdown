@@ -19,14 +19,13 @@ Currently Learning:
 - Blockchain Security
 
 
-- Browser Exploitation
-
-
 - Windows Exploit Development(OSED)
 
 
 - Flutter Reverse Engineering
 
+
+- Red Team
 
 
 Each of this area will get seperate section of categories so it will be much more easier to navigate. Furthermore, the blog format and design will be continuously updated. Finally, I have an old blogger([old blog][old-blogs]). I will used this to post more CTF, red team and blue team stuff.

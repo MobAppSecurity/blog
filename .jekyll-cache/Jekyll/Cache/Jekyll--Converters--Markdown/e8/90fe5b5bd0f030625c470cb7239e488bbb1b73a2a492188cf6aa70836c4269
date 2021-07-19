@@ -1,0 +1,130 @@
+I"'<p>Hello world!</p>
+
+<p>Before we getting start with the content, I would like to mentioned that this material is not meant for beginner. If you never done Windows Exploit Development before I suggest to start reading my old blog about breaking the code series(<a href="https://court-of-testing-analysing.blogspot.com/2019/11/breaking-code-exploit-development.html">link</a>) this will give a general idea on how to setup and conduct research on windows binary.</p>
+
+<p>This post was heavily inspired from the following <a href="https://www.exploit-db.com/exploits/46625">exploit-db</a>. You may notice later there are some differences on my exploit script but the concept is still the same with the original author.</p>
+
+<p>Enjoy!</p>
+
+<h2> Setup Windows Lab </h2>
+
+<p>In this lab I used Windows 7 from windows IE developer official(<a href="https://developer.microsoft.com/en-us/microsoft-edge/tools/vms/">website</a>) and install several tools for exploit development in it, such as:</p>
+
+<ul>
+  <li>
+    <p>Python 2.7</p>
+  </li>
+  <li>
+    <p>Immunity Debugger</p>
+  </li>
+  <li>
+    <p>Mona</p>
+  </li>
+  <li>
+    <p>The vulnerable program, you can download it from the following <a href="https://www.exploit-db.com/exploits/46625">link</a></p>
+  </li>
+</ul>
+
+<p>Note 1: In this exploit, DEP is set to on, however I choose the option where it only affect some critical components in windows not our target program!</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows1.png" alt="PLIST-FILE_3" height="500px" width="450px" /></p>
+
+<h2> Crash and Take Over the Program EIP </h2>
+
+<p>Lets crash the program by supplying it with a massive amount of characters, we are just going straight used mona in immunity debugger to create a pattern to identify at what offset did the EIP is overwrite in our input.</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="o">!</span>mona pattern_create 700</code></pre></figure>
+
+<figure class="highlight"><pre><code class="language-py" data-lang="py"><span class="n">padding</span> <span class="o">=</span> <span class="o">&lt;</span><span class="n">pattern</span> <span class="n">payload</span><span class="o">&gt;</span>
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">"payload.txt"</span><span class="p">,</span><span class="s">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="nb">file</span><span class="p">:</span>
+  <span class="nb">file</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">padding</span><span class="p">)</span>
+  <span class="nb">file</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">print</span> <span class="s">"[!] payload.txt ready to uploaded"</span></code></pre></figure>
+
+<p>Start the program, it should be look like this and we are going to copy-paste the payload from payload.txt to the “save to file” form and click “decode”. Don’t forget to attach it with immunity debugger.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows4.png" alt="PLIST-FILE_3" height="500px" width="450px" /></p>
+
+<p>The program is crash but we don’t see EIP is overwritten with our input, hmmmmm whats going on? is it because the payload is not long enough or is there any error that cause this situation.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows2.png" alt="PLIST-FILE_3" height="500px" width="450px" /></p>
+
+<p>The answer is because of the SEH features in the program. Basically SEH is like a try exception mechanism inside a program to handle error, if you are a programmer you already might know about this concept.</p>
+
+<p>So how do we proceed? what should we do about it? simple! we shift our focus on taking control on SEH. The rule is that if a program encounter error it execution will be control by SEH so our priority now is to find the offset to overwrite SEH. You can take a quick look of where is the SEH reside at the bottom right window of immunity debugger.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows3.png" alt="PLIST-FILE_3" height="400px" width="350px" /></p>
+
+<p>If you take a look again at the result above you can see that before SEH there is nSEH(next SEH) this is a pointer that lead to another exception if the exception of the program currently hold can’t satifsfy the current error. Basically SEH structured like a linked list.</p>
+
+<p>Thus, to take a full control of the SEH, we have to carefully overwrite this two location to take control of the program execution.</p>
+
+<p>Of course you can pass the exception on immunity debugger to see what offset in our input overwrite the EIP, you can do this by clicking shift + f9 two times.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows5.png" alt="PLIST-FILE_3" height="400px" width="350px" /></p>
+
+<p>To get the offset of the SEH and nSEH type the following command below. The result show us that EIP is overwrite at the index 624 and SEH is at 620, remember! our focus is now on SEH.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows6.png" alt="PLIST-FILE_3" /></p>
+
+<p>Lets try to update our current script:</p>
+
+<figure class="highlight"><pre><code class="language-py" data-lang="py"><span class="n">padding</span> <span class="o">=</span> <span class="s">"A"</span> <span class="o">*</span> <span class="mi">620</span>
+<span class="n">nseh</span> <span class="o">=</span> <span class="s">"B"</span> <span class="o">*</span> <span class="mi">4</span>
+<span class="n">seh</span> <span class="o">=</span> <span class="s">"C"</span> <span class="o">*</span> <span class="mi">4</span>
+<span class="n">junk</span> <span class="o">=</span> <span class="s">"D"</span> <span class="o">*</span> <span class="mi">10</span> 
+<span class="n">payload</span> <span class="o">=</span> <span class="n">padding</span> <span class="o">+</span> <span class="n">nseh</span> <span class="o">+</span> <span class="n">seh</span> <span class="o">+</span> <span class="n">junk</span>
+
+<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="s">"payload.txt"</span><span class="p">,</span><span class="s">"wb"</span><span class="p">)</span> <span class="k">as</span> <span class="nb">file</span><span class="p">:</span>
+  <span class="nb">file</span><span class="p">.</span><span class="n">write</span><span class="p">(</span><span class="n">payload</span><span class="p">)</span>
+  <span class="nb">file</span><span class="p">.</span><span class="n">close</span><span class="p">()</span>
+
+<span class="k">print</span> <span class="s">"[!] payload.txt ready to uploaded"</span></code></pre></figure>
+
+<p>Execute the script and try to paste it into the form again. It will crash again, however, try to check the SEH chain by going to “view” &gt; “seh chain”</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows7.png" alt="PLIST-FILE_3" /></p>
+
+<p>cool! now we have taking control on the SEH chain. So what should we fill in those two places, according to <a href="https://www.fuzzysecurity.com/tutorials/expDev/3.html">fuzzysecurity</a> we wanted to change the execution back to the stack because our shellcode is going to be there.</p>
+
+<p>To do that we need a gadget that have this sequences:</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh">pop reg <span class="p">;</span> pop reg <span class="p">;</span> ret</code></pre></figure>
+
+<p>this gadget will change the execution to the stack and it automatically make us move back two steps, thus, making it to land in the nSEH.</p>
+
+<p>Finally, we fill nSEH with a short jump which start with: \xeb. Usually, most of the tutorial about SEH will be suggesting to do jump forward to front of the SEH, since this is where the shellcode usually placed in exploit later. But as I notice after I do a couple of trial and error, if I try to supply a payload more than 200 after the SEH it will tamper the exploit payload, which is not enough.</p>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows8.jpg" alt="PLIST-FILE_3" /></p>
+
+<p>So what should we do then? We can jump backward again but this time we land before the nSEH since we have around 600 bytes of space at the beginning of exploit. But heres the catch!</p>
+
+<p>To jump backward you can supply value between 0x80(-128) - 0xff(-1) along with the “\xeb”.</p>
+
+<p>But this is still not enough since we only jump back 128 bytes. Thus, we need to incoporate what so called egghunter. Egghunter usually useful when we want to search our truncated payload, but in this case, we will used egghunter like this:</p>
+
+<ol>
+  <li>
+    <p>SEH will contain pop reg ; pop reg ; ret</p>
+  </li>
+  <li>
+    <p>nSEH will jump backward with \xeb\x80 that will move the execution to our egghunter</p>
+  </li>
+  <li>
+    <p>Egghunter will search the shellcode that will later placed at the beginning of our exploit.</p>
+  </li>
+</ol>
+
+<p style="text-align: center;"><img src="http://localhost:4000/blog/img/windows_exploit_dev_2/windows9.jpg" alt="PLIST-FILE_3" /></p>
+
+<p>So that’s going to be our plan for the exploit, but wait! there is more! and this going to be a final problem that we have to deal with.</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="o">!</span>mona modules</code></pre></figure>
+
+<p>but as we see
+We can find the required gadget with mona:</p>
+
+<figure class="highlight"><pre><code class="language-sh" data-lang="sh"><span class="o">!</span>mona seh</code></pre></figure>
+
+:ET
