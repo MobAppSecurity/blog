@@ -6,9 +6,10 @@ categories: "food_for_thought"
 ---
 Hello world! For my first post, I think it's a good idea to introduce this blog and what kinda content that will be released for now and for the future. Little bit of myself, My name is williams from Indonesia and I currently work in cyber security field. I create this blog to share what I thought to be interesting and useful for doing real life security testing, learning new technology and also this blog would be indirectly used as a cheatsheet of mine if I ever forget some POC that I have done earlier, mostly this blog will cover about:
 
-- Cloud Security: - AWS, AZURE and GCP
+- Cloud Security: - AWS, AZURE, GCP, Kubernetes and Docker
 - Red teaming: - Active Directory, Exploit Dev and Bypass Endpoint Security
 - Mobile Security: - Application security and iOS Jailbreaking
+- API Security
 - Linux Kernel Hacking
 - Some CTF 
 
