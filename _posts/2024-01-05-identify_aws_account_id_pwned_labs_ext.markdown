@@ -93,13 +93,15 @@ Put the following policy
 ![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/leaky_bucket_role.png){:height="400px" width="1800px"}
 {:refdef}
 
-ok this is very important the name of the role need to be the same as the one you created in sts:AssumeRole if you don't it will give you the same error. Finally, you put the ARN of your aws account that you have created earlier in this case it will be the "leaky_user_bucket" by doing this we assing this role to our current user.
+ok this is very important the name of the role need to be the same as the one you created in sts:AssumeRole if you don't do it will give you the same error. Finally, you put the ARN of your aws account that you have created earlier in this case it will be the "leaky_user_bucket" by doing this we assing this role to our current user.
 
 Then you can run the s3-account-search tool again and there you go it will give the account id:
 
 {:refdef: style="text-align: center;"}
 ![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/result.png){:height="200px" width="1500px"}
 {:refdef}
+
+That's all folks I hope you enjoy this post and see you next time!
 
 [lab]: https://pwnedlabs.io/labs/identify-the-aws-account-id-from-a-public-s3-bucket
 [link]: https://www.youtube.com/watch?v=jXleMOWvq80
