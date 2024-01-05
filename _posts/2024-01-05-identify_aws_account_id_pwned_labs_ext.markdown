@@ -9,7 +9,7 @@ Hello world!
 
 <h2>Background</h2>
 
-Before we getting start with the content, I would like to mentioned that this post is originally come from the following ([lab][lab]) created by pwnedlabs and this post is inspired from the following youtube video's comment. The video itself is created by Afshan - AFS Hackers Academy you can also check it from this ([link][link]) and the original youtube comment also posted in this video. 
+Before we getting start with the content, I would like to mentioned that this post is originally come from the following ([lab][lab]) created by pwnedlabs and this post is inspired from the following youtube video's comment ([link][link]). The video itself is created by Afshan - AFS Hackers Academy you can also check it from this ([link][link]) and the original youtube comment also posted in this video. 
 
 So little bit of background of the lab, the lab itself taught you how to leverage a misconfigurate public s3 bucket that could lead to exposing AWS Account ID using tools such as s3-account-search. The lab gives you 2 options to do the task either using the access account and secret key that provide by the pwnedlabs or you can setup access account and secret key by yourself through your AWS account.
 
