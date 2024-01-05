@@ -12,7 +12,7 @@ Hello world!
 Before we getting start with the content, I would like to mentioned that this post is originally come from the following ([lab][lab]) created by pwnedlabs. This post is inspired from the following youtube comment. So little bit of background of the lab, the lab itself taught you how to leverage a misconfigurate public s3 bucket that could lead to exposing AWS Account ID using tools such as s3-account-search. The lab gives you 2 options to do the task either using the access account and secret key that provide by the pwnedlabs or you can setup access account and secret key by yourself through your AWS account.
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/youtube_comment.png){:height="100px" width="800px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/youtube_comment.png){:height="200px" width="800px"}
 {:refdef}
 
 The first task is already cover by Afshan - AFS Hackers Academy you can also check youtube video from this ([link][link]) and the original youtube comment also posted in this video. However, as I looking around the internet and some write up, I don't find any blog that talk about the second option or is it me that not looking for it hard enough. Thus, in this post I will share it to you how to setup the IAM user that can be used to running s3-account-search.
@@ -26,13 +26,13 @@ This post will be
 The first part is pretty straightforward as you need to create a IAM user that have sts:AssumeRole and S3 bucket policy which are s3:GetObject and s3:ListBucket. In this case, I created one new user named "leaky_user_bucket", in this case I do not attached any permission or role yet, this will come later. 
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/create_user_iam.png){:height="500px" width="900px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/create_user_iam.png){:height="300px" width="900px"}
 {:refdef}
 
 After that I create access key for this user 
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/create_access_key.png){:height="400px" width="900px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/create_access_key.png){:height="300px" width="900px"}
 {:refdef}
 
 Next is to create two policies that I have mentioned earlier and attached this into the "leaky_user_bucket"
@@ -40,25 +40,25 @@ Next is to create two policies that I have mentioned earlier and attached this i
 When creating the policy I just straight to specify permissions via JSON mode in policy editor
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/json_mode.png){:height="200px" width="1000px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/json_mode.png){:height="100px" width="1000px"}
 {:refdef}
 
 Put the following detail, I changed the aws account id based on the user "leaky_user_bucket" and for the role you can put any name but in this case I will put "LeakyBucket"
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/sts_assume_role.png){:height="600px" width="1500px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/sts_assume_role.png){:height="400px" width="1500px"}
 {:refdef}
 
 After that you saved and named the policy anything you want while in this case I put the policy name as "assume_role_policy_pwned". Finally you create the S3 bucket policy like this:
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/s3_bucket.png){:height="600px" width="1200px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/s3_bucket.png){:height="400px" width="1200px"}
 {:refdef}
 
 Again for the naming you can choose anything you want while in this case I put the name as "mega_big_bucket_leak". At the end of this part you will have two policies like this:
 
 {:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/list_policies.png){:height="600px" width="1200px"}
+![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/list_policies.png){:height="300px" width="1200px"}
 {:refdef}
 
 <h2> Part 2 - Rabbithole </h2>
