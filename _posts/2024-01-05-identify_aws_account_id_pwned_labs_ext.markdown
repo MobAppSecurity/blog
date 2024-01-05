@@ -11,10 +11,6 @@ Hello world!
 
 Before we getting start with the content, I would like to mentioned that this post is originally come from the following ([lab][lab]) created by pwnedlabs and this post is inspired from the following youtube video's comment. The video itself is created by Afshan - AFS Hackers Academy you can also check it from this ([link][link]) and the original youtube comment also posted in this video. 
 
-{:refdef: style="text-align: center;"}
-![SETUP_PREVIEW]({{site.url}}/blog/img/identify_s3_id/youtube_comment.png){:height="300px" width="800px"}
-{:refdef}
-
 So little bit of background of the lab, the lab itself taught you how to leverage a misconfigurate public s3 bucket that could lead to exposing AWS Account ID using tools such as s3-account-search. The lab gives you 2 options to do the task either using the access account and secret key that provide by the pwnedlabs or you can setup access account and secret key by yourself through your AWS account.
 
 The first task is already cover by Afshan - AFS Hackers Academy. However, as I looking around the internet and some write up, I don't find any blog that talk about the second option or it's just me that not looking for it hard enough. Thus, in this post I will share it to you how to setup the IAM user that can be used to running s3-account-search.
